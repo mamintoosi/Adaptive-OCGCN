@@ -216,3 +216,27 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# ===== Datasets (keep local, do not commit) =====
+tmp/
+dataset/
+datasets/
+data/
+
+# ===== LaTeX junk files =====
+*.aux
+*.log
+*.out
+*.synctex.gz
+*.bbl
+*.blg
+*.fls
+*.fdb_latexmk
+*.nav
+*.snm
+*.vrb
+*.toc
+*.lof
+*.lot
+*.spl
+*.synctex(busy)

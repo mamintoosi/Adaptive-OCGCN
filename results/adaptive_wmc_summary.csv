@@ -1,0 +1,7 @@
+dataset,strategy,f1_mean,f1_std,overlap_mean
+ACM,entropy_adaptive_wmc,0.8766,0.0523,1.3055
+ACM,margin_adaptive_wmc,0.8926,0.0536,1.314
+ACM,original_wmc,0.8204,0.1264,1.2645
+DBLP,entropy_adaptive_wmc,0.8678,0.0105,1.3196
+DBLP,margin_adaptive_wmc,0.8595,0.0028,1.3284
+DBLP,original_wmc,0.8474,0.0108,1.2439

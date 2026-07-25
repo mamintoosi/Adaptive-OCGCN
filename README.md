@@ -1,2 +1,144 @@
 # Adaptive-OCGCN
-Adaptive Overlapping Cluster-GCN
+
+Adaptive overlap thresholding for Overlapping Cluster-GCN using community-membership ambiguity.
+
+## Problem
+
+Overlapping Cluster-GCN (OCGCN) extends Cluster-GCN by allowing nodes to participate in multiple clusters. The original OCGCN uses a single global Winner Membership Closeness (WMC) threshold applied uniformly to all nodes. This requires per-dataset tuning and ignores the fact that nodes vary enormously in their membership ambiguity.
+
+## Method
+
+We propose two adaptive overlap selection methods that replace the global WMC with a node-specific threshold derived from each node's membership distribution:
+
+**Entropy-Adaptive WMC** — scales the threshold by normalized membership entropy:
+
+```
+WMC_i = WMC_base * (1 - lambda * H_norm(i))
+```
+
+Nodes with high entropy (spread across many clusters) get a lower threshold, allowing them to join more clusters.
+
+**Margin-Adaptive WMC** — scales by the ambiguity of the top-two membership gap:
+
+```
+A(i) = 1 - (p1 - p2)
+WMC_i = WMC_base * (1 - lambda * A(i))
+```
+
+Nodes caught between two dominant communities get a lower threshold.
+
+Both methods eliminate the need for manual WMC tuning while achieving competitive performance across diverse graph datasets.
+
+## Project Structure
+
+```
+Adaptive-OCGCN/
+├── src/
+│   ├── overlap_selection/           # Core: overlap selection strategies
+│   │   ├── common.py                # Base class + entropy/margin utilities
+│   │   ├── original_wmc.py          # Global WMC baseline
+│   │   ├── entropy_adaptive_wmc.py  # Entropy-adaptive variant
+│   │   └── margin_adaptive_wmc.py   # Margin-adaptive variant
+│   ├── clustergcn.py                # Cluster-GCN implementation
+│   ├── clustering.py                # Graph clustering (Louvain, spectral)
+│   ├── ra_ocgcn_clustering.py       # Role-aware OCGCN clustering pipeline
+│   ├── layers.py                    # GCN layers
+│   ├── utils.py                     # Data loading, evaluation utilities
+│   ├── hetero_utils.py              # Heterogeneous graph utilities
+│   ├── parser.py                    # Argument parsing
+│   ├── main.py                      # Main entry point
+│   ├── main_ra_ocgcn.py             # Role-aware OCGCN entry point
+│   ├── run_full_experiments.py      # Full experiment suite
+│   ├── run_ablation.py              # Ablation study runner
+│   ├── run_ambiguity_analysis.py    # Ambiguity analysis
+│   ├── run_full_ambiguity_analysis.py
+│   ├── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison
+│   └── run_mag_evaluation.py        # OGBN-MAG evaluation
+├── results/                         # Experimental results
+│   ├── plots/                       # Generated figures (13 PNGs)
+│   └── *.csv                        # Raw and summary results
+├── adaptive-ocgcn-latex/            # Paper manuscript
+│   ├── adaptive_ocgcn.tex           # LaTeX source
+│   ├── adaptive_ocgcn.pdf           # Compiled PDF
+│   ├── figures/                     # Paper figures
+│   └── generate_plots.py            # Figure generation script
+├── docs/
+│   ├── ALGORITHM_OVERVIEW.md        # Algorithm description
+│   └── CODEBASE_OVERVIEW.md         # Codebase documentation
+└── tmp/                             # Datasets (gitignored)
+```
+
+## Datasets
+
+| Dataset  | Type          | Nodes   | Edges    | Classes |
+|----------|---------------|---------|----------|---------|
+| Cora     | Citation      | 2,708   | 5,278    | 7       |
+| CiteSeer | Citation      | 3,327   | 4,552    | 6       |
+| PubMed   | Citation      | 19,717  | 44,324   | 3       |
+| ACM      | Heterogeneous | 2,363   | 5,318    | 3       |
+| DBLP     | Heterogeneous | 2,591   | 3,528    | 4       |
+| IMDB     | Heterogeneous | 4,630   | 54,576   | 5       |
+
+## Usage
+
+### Overlap Selection
+
+```python
+from src.overlap_selection import create_selector
+
+# Entropy-adaptive with default lambda=0.5
+selector = create_selector("entropy_adaptive_wmc", membership_closeness=0.3, lam=0.5)
+assignments = selector.select_overlap(P, valid_clusters)
+
+# Margin-adaptive
+selector = create_selector("margin_adaptive_wmc", membership_closeness=0.3, lam=0.5)
+assignments = selector.select_overlap(P, valid_clusters)
+
+# Original global WMC (baseline)
+selector = create_selector("original_wmc", membership_closeness=0.3)
+assignments = selector.select_overlap(P, valid_clusters)
+```
+
+### Running Experiments
+
+```bash
+# Full experiment suite (6 datasets, 10 seeds)
+python src/run_full_experiments.py
+
+# Ablation study (lambda sensitivity)
+python src/run_ablation.py
+
+# Fixed WMC vs adaptive comparison
+python src/run_fixed_wmc_comparison.py
+
+# Ambiguity analysis
+python src/run_full_ambiguity_analysis.py
+```
+
+### Compiling the Paper
+
+```bash
+cd adaptive-ocgcn-latex
+pdflatex adaptive_ocgcn.tex
+```
+
+## Key Results
+
+- Adaptive thresholding eliminates the WMC hyperparameter while maintaining competitive performance
+- Entropy-Adaptive with lambda=0.50 is a reasonable default across all datasets
+- High-entropy nodes are 69-95% overlap candidates vs 0-17% for low-entropy nodes
+- At matched overlap ratios, adaptive methods win on 4/6 datasets (+0.001 to +0.023 F1)
+
+## Citation
+
+```bibtex
+@article{amintoosi2022overlapping,
+  title={Overlapping Clusters in Cluster Convolutional Networks},
+  author={Amintoosi, Mahmood},
+  journal={Journal of Applied Analysis and Computation},
+  volume={12},
+  number={3},
+  pages={1173--1189},
+  year={2022}
+}
+```
