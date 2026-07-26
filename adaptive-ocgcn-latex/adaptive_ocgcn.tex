@@ -40,9 +40,10 @@ organization={Computer Science Division, Department of Applied Mathematics.},
             country={IRAN}}
 
 \begin{highlights}
-\item 1
-%\includegraphics[width=.75\textwidth]{GA.pdf}
-
+\item We propose adaptive overlap thresholding that eliminates manual WMC tuning in Overlapping Cluster-GCN.
+\item Node-specific thresholds are derived from community-membership entropy and margin ambiguity.
+\item Competitive performance across six benchmarks without per-dataset hyperparameter search.
+\item High-entropy nodes are 69--95\% overlap candidates, validating ambiguity as a selection criterion.
 \end{highlights}
 
 \begin{abstract}
@@ -54,8 +55,12 @@ We evaluate both variants across six benchmark graphs (Cora, CiteSeer, PubMed, A
 Our results show that adaptive thresholding achieves competitive performance across all datasets while eliminating the need for manual WMC search.
 Entropy-based selection outperforms fixed baselines on four of six datasets when overlap ratios are matched, with gains up to +2.3 F1 points.
 A comprehensive ambiguity analysis confirms that high-entropy nodes are 69--95\% overlap candidates versus 0--17\% for low-entropy nodes, validating the core hypothesis that membership ambiguity is a principled signal for overlap assignment.
-These findings establish adaptive thresholding as a practical, parameter-free alternative to manual WMC tuning for overlapping cluster-based GCN training.
+These findings establish adaptive thresholding as a practical alternative to manual WMC tuning for overlapping cluster-based GCN training, requiring only a single universal adaptation parameter ($\lambda = 0.5$) instead of per-dataset WMC grid search.
 \end{abstract}
+
+\begin{graphicalabstract}
+\includegraphics{graphical_abstract.pdf}
+\end{graphicalabstract}
 
 %\maketitle
 
@@ -99,10 +104,10 @@ Both methods retain the base WMC as an anchor and scale it by an ambiguity measu
 Our contributions are:
 
 \begin{enumerate}
-  \item We formalize the connection between community-membership ambiguity and overlap assignment quality, showing that entropy and margin measures capture complementary aspects of structural ambiguity.
-  \item We propose two adaptive overlap selection methods---Entropy-Adaptive WMC and Margin-Adaptive WMC---that replace the global WMC threshold with node-specific thresholds, eliminating the need for per-dataset WMC tuning.
-  \item We present a comprehensive empirical evaluation across six diverse graph datasets, demonstrating that adaptive thresholding achieves competitive performance while removing a key hyperparameter.
-  \item We conduct a detailed ambiguity analysis using stratified experiments and correlation studies, providing evidence that membership ambiguity is a principled criterion for overlap assignment.
+  \item We identify a fundamental limitation of the original OCGCN: a single global WMC threshold ignores node-level variation in membership ambiguity, requiring costly per-dataset grid search.
+  \item We propose two adaptive overlap selection methods---Entropy-Adaptive WMC and Margin-Adaptive WMC---that derive node-specific thresholds from the membership distribution, replacing WMC grid search with a single universal adaptation parameter $\lambda = 0.5$.
+  \item We provide comprehensive empirical evidence that adaptive thresholding achieves competitive performance across six diverse graphs while eliminating the WMC hyperparameter, and we characterize when and why it helps (high entropy variance datasets).
+  \item We conduct a detailed ambiguity analysis using stratified experiments and correlation studies, establishing that membership ambiguity is a principled criterion for overlap assignment.
 \end{enumerate}
 
 
@@ -357,6 +362,8 @@ All experiments use:
   \item DANMF for community detection with $K$ set to the number of classes per dataset
 \end{itemize}
 
+The adaptive overlap selection adds negligible computational overhead: entropy and margin computations are $O(K)$ and $O(K \log K)$ per node respectively, applied once after DANMF convergence and before GCN training.
+
 
 %%======================================================================
 \section{Results}
@@ -597,14 +604,6 @@ IMDB      & 0.419 & 0.280 & 0.500 & 0.621 & 2.20 \\
 IMDB has the highest entropy ($\mu = 0.419$) and overlap ratio (0.621), reflecting its dense structure and role-heterogeneous nature.
 CiteSeer has the lowest entropy ($\mu = 0.071$), indicating near-deterministic memberships.
 Entropy variance is highest on IMDB ($\sigma = 0.280$) and lowest on CiteSeer ($\sigma = 0.126$), suggesting that IMDB has the widest spread of ambiguity levels---the condition under which adaptive thresholding should have the most room to help.
-Figure~\ref{fig:ambiguity-stats} visualizes these characteristics.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{figures/dataset_ambiguity_stats.png}
-\caption{Dataset ambiguity characteristics. (Left) Mean entropy, overlap ratio, and cluster count per dataset. IMDB stands out with the highest entropy and overlap ratio. (Center) Entropy standard deviation. (Right) Entropy distribution box plots. IMDB shows the widest distribution, explaining why it benefits most from adaptive thresholding.}
-\label{fig:ambiguity-stats}
-\end{figure}
 
 \subsection{Correlation Between Ambiguity and Overlap}
 \label{subsec:correlation}
@@ -721,7 +720,7 @@ ACM      & 0.036 & $-$0.1\% & Near ceiling $\rightarrow$ no room regardless of m
 
 Performance gains from adaptive thresholding correlate with entropy variance: datasets with higher variance have more nodes whose ambiguity can be exploited by node-specific thresholds.
 This provides a partial predictive relationship: when a dataset's entropy distribution has high variance, adaptive methods are likely to help.
-Figure~\ref{fig:gain-variance} shows the relationship between entropy variance and performance gain, while Figure~\ref{fig:entropy-histograms} shows the entropy distributions across all six datasets, illustrating the variance differences.
+Figure~\ref{fig:gain-variance} shows the relationship between entropy variance and performance gain.
 
 \begin{figure}[ht]
 \centering
@@ -730,22 +729,7 @@ Figure~\ref{fig:gain-variance} shows the relationship between entropy variance a
 \label{fig:gain-variance}
 \end{figure}
 
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{figures/entropy_histograms.png}
-\caption{Membership entropy distributions for each dataset. IMDB shows the widest distribution (highest variance), explaining why it benefits most from adaptive thresholding. CiteSeer shows the narrowest distribution concentrated near zero.}
-\label{fig:entropy-histograms}
-\end{figure}
-
 Ceiling effects (ACM) and very low ambiguity (CiteSeer) limit gains regardless of variance.
-Figure~\ref{fig:ambiguity-histograms} shows the ambiguity score distributions, confirming that most nodes on CiteSeer and PubMed have low ambiguity, while IMDB shows a broader spread.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{figures/ambiguity_histograms.png}
-\caption{Ambiguity score distributions ($A(i) = 1 - (p_1 - p_2)$) for each dataset. IMDB shows a more spread distribution with many nodes having moderate-to-high ambiguity, while CiteSeer and PubMed are concentrated near zero.}
-\label{fig:ambiguity-histograms}
-\end{figure}
 
 
 %%======================================================================
@@ -762,10 +746,11 @@ Low-entropy nodes, by contrast, are well-served by single-cluster training.
 
 \subsection{Adaptive Thresholding Eliminates a Hyperparameter}
 
-The primary practical contribution is the elimination of the WMC hyperparameter.
+The primary practical contribution is the elimination of the WMC hyperparameter search.
 Our fixed-WMC comparison (Table~\ref{tab:main-results}) shows that the optimal WMC varies across datasets: WMC~=~0.10 is best for CiteSeer, PubMed, and IMDB, while WMC~=~0.20--0.30 is best for Cora and DBLP.
 Without adaptive methods, practitioners must search over WMC values---a costly process that requires retraining on each dataset.
 Entropy-Adaptive with $\lambda = 0.50$ achieves competitive performance across all six datasets without per-dataset tuning.
+Importantly, this is not a claim of universal superiority over well-tuned baselines, but rather a demonstration that a single universal configuration ($\mathrm{WMC}_{\mathrm{base}} = 0.3$, $\lambda = 0.5$) performs comparably to per-dataset tuned WMC, eliminating the need for grid search.
 This is particularly valuable in scenarios where practitioners work with many graphs or where the optimal WMC is not known a priori.
 
 \subsection{Performance Gains Are Modest but Real}
@@ -773,7 +758,7 @@ This is particularly valuable in scenarios where practitioners work with many gr
 At matched overlap ratios, adaptive methods improve by +0.001 to +0.023 F1 over fixed baselines on four of six datasets.
 The gains are real but modest, reflecting the fact that the original WMC already captures a substantial portion of the useful overlap signal.
 Adaptive methods refine this signal by scaling the threshold based on node-level ambiguity, but the marginal improvement is bounded.
-We do not claim universal superiority over well-tuned fixed baselines---the contribution is principled threshold selection, not raw performance.
+The contribution is not universal performance superiority over well-tuned baselines, but rather principled threshold selection that eliminates the tuning cost.
 
 \subsection{Entropy vs.\ Margin: Complementary Signals}
 
@@ -788,7 +773,7 @@ A hybrid approach combining both signals could potentially improve robustness, t
 Based on our findings, we recommend:
 
 \begin{enumerate}
-  \item \textbf{Default configuration:} Entropy-Adaptive with $\mathrm{WMC}_{\mathrm{base}} = 0.3$ and $\lambda = 0.50$. This provides competitive performance across all tested datasets without per-dataset tuning.
+  \item \textbf{Default configuration:} Entropy-Adaptive with $\mathrm{WMC}_{\mathrm{base}} = 0.3$ and $\lambda = 0.50$. This single configuration provides competitive performance across all tested datasets without per-dataset tuning.
   \item \textbf{When strong ambiguity is expected:} Increase $\lambda$ to 0.75 (as on IMDB).
   \item \textbf{When a tuned fixed WMC is available:} Adaptive methods are unlikely to significantly outperform it, but they provide a principled starting point that avoids the tuning cost.
 \end{enumerate}
@@ -832,12 +817,12 @@ The adaptive thresholding is architecture-agnostic, but the magnitude of its ben
 
 This paper introduces adaptive overlap thresholding for Overlapping Cluster-GCN, replacing the global WMC threshold with node-specific thresholds derived from community-membership ambiguity.
 Two variants are proposed: Entropy-Adaptive WMC, which scales the threshold by normalized membership entropy, and Margin-Adaptive WMC, which scales by the ambiguity of the top-two membership gap.
-Both methods eliminate the need for manual WMC tuning while achieving competitive performance across six benchmark graphs.
+Both methods replace per-dataset WMC grid search with a single universal configuration ($\mathrm{WMC}_{\mathrm{base}} = 0.3$, $\lambda = 0.5$) that achieves competitive performance across six benchmark graphs.
 
 The core hypothesis---that membership ambiguity identifies useful overlap nodes---is validated through stratified analysis showing that high-entropy nodes are 69--95\% overlap candidates, with strong correlations between entropy and cluster count on all datasets.
 Performance gains from adaptive thresholding are modest but real: at matched overlap ratios, adaptive methods improve by +0.001 to +0.023 F1 over fixed baselines on four of six datasets, with Entropy-Adaptive achieving the highest overlap efficiency on Cora and PubMed.
 
-The practical value of adaptive thresholding is the removal of the WMC hyperparameter, a parameter that varies across datasets and requires costly search.
+The practical value of adaptive thresholding is the removal of the WMC hyperparameter search, a process that varies across datasets and requires costly retraining.
 Entropy-Adaptive with $\lambda = 0.50$ provides a reasonable default that works well across diverse graph types.
 Future work should explore hybrid entropy-margin methods, scaling to larger graphs, and theoretical analysis of the overlap quality bound.
 
