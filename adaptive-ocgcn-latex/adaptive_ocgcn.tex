@@ -1,4 +1,4 @@
-\documentclass[a4paper,10pt,oneside,onecolumn,preprint]{elsarticle}
+\documentclass[a4paper,11pt,oneside,onecolumn,preprint]{elsarticle}
 
 \usepackage{graphicx}
 \usepackage{amsthm,amssymb,amsmath}
@@ -10,21 +10,40 @@
 \usepackage{booktabs}
 \usepackage{multirow}
 \usepackage{siunitx}
-
+\usepackage{lineno}
 \numberwithin{equation}{section}
 
 \DeclareMathOperator{\argmaxG}{arg\,max}
 \newcommand{\norm}[1]{\left\lVert#1\right\rVert}
 
+
+\begin{document}
+
+\begin{frontmatter}
 %% Title
 \title{Adaptive Overlap Thresholding for Overlapping Cluster-GCN Using Community-Membership Ambiguity}
 
-\author{Mahmood Amintoosi\\
-Faculty of Mathematics and Computer Science, Hakim Sabzevari University, Sabzevar, Iran\\
-m.amintoosi@hsu.ac.ir
-}
+\author{Mahmood Amintoosi}
+\affiliation{organization={Graph Theory and its Applications Lab.},%Department and Organization
+            addressline={Faculty of Mathematical Sciences, Ferdowsi University of Mashhad}, 
+%            city={},
+%            postcode={m.amintoosi@um.ac.ir}, 
+%            state={},
+%            country={IRAN}
+            }
+\affiliation{%Department and Organization
+organization={Computer Science Division, Department of Applied Mathematics.},
+            addressline={Faculty of Mathematical Sciences, Ferdowsi University of Mashhad}, 
+            city={P. O. Box 1159, Mashhad 91775},
+            postcode={m.amintoosi@um.ac.ir}, 
+%            state={},
+            country={IRAN}}
 
-\begin{document}
+\begin{highlights}
+\item 1
+%\includegraphics[width=.75\textwidth]{GA.pdf}
+
+\end{highlights}
 
 \begin{abstract}
 Graph Convolutional Networks (GCNs) benefit from clustered training strategies that partition the graph into manageable subgraphs.
@@ -38,12 +57,19 @@ A comprehensive ambiguity analysis confirms that high-entropy nodes are 69--95\%
 These findings establish adaptive thresholding as a practical, parameter-free alternative to manual WMC tuning for overlapping cluster-based GCN training.
 \end{abstract}
 
-\maketitle
+%\maketitle
 
-%\begin{keywords}
-%Graph Convolutional Networks \sep Overlapping Clustering \sep Cluster-GCN \sep Membership Ambiguity \sep Adaptive Thresholding
-%\end{keywords}
+\begin{keyword}
+Graph Convolutional Networks \sep Overlapping Clustering \sep Cluster-GCN \sep Membership Ambiguity \sep Adaptive Thresholding
+\end{keyword}
 
+
+
+\end{frontmatter}
+
+%% Add \usepackage{lineno} before \begin{document} and uncomment 
+%% following line to enable line numbers
+ \linenumbers
 %%======================================================================
 \section{Introduction}
 \label{sec:introduction}
