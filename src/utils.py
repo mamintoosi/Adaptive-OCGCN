@@ -55,38 +55,44 @@ def target_reader(path):
     target = np.array(pd.read_csv(path)["target"]).reshape(-1,1)
     return target
 
+def load_citation_dataset(dataset_name, ds_root):
+    """
+    Read a citation network (Planetoid / WikiCS) without argparse.
+    :param dataset_name: Name of the dataset.
+    :param ds_root: Root folder containing the dataset.
+    :return graph, features, target: NetworkX graph, feature matrix, target vector.
+    """
+    if dataset_name == 'PubMed':
+        dataset = Planetoid(root=ds_root + '/PubMed', name='PubMed', split='full')
+    elif dataset_name == 'Cora':
+        dataset = Planetoid(root=ds_root + '/Cora', name='Cora', split='full')
+    elif dataset_name == 'CiteSeer':
+        dataset = Planetoid(root=ds_root + '/CiteSeer', name='CiteSeer', split='full')
+    elif dataset_name == 'WikiCS':
+        dataset = WikiCS(root=ds_root + '/WikiCS')
+    else:
+        raise ValueError(f"Unknown citation dataset: {dataset_name}")
+    data = dataset[0]
+    graph = to_networkx(data, to_undirected=True)
+    features = data.x.numpy()
+    target = data.y.numpy()[..., np.newaxis]
+    return graph, features, target
+
+
 def dataset_reader(args):
     """
-    Reading the dataset
-    :param dataset_name: Name of the dataset.
-    :param path: Path to the target.
-    :return target: Target vector.
+    Reading the dataset from parsed arguments.
+    :param args: Parsed arguments.
+    :return graph, features, target: NetworkX graph, feature matrix, target vector.
     """
-    dataset_name = args.dataset_name
-    # if dataset_name=='PPI':        
-    #     dataset = PPI(root=path)
-    if dataset_name=='default':
+    if args.dataset_name == 'default':
         graph = graph_reader("./input/edges.csv")
         features = feature_reader("./input/features.csv")
         target = target_reader("./input/target.csv")
-
-    elif dataset_name in ['PubMed', 'Cora', 'CiteSeer','WikiCS']:
-        if dataset_name == 'PubMed':
-            dataset = Planetoid(root=args.ds_root+'/PubMed', name='PubMed', split='full')
-        elif dataset_name == 'Cora':
-            dataset = Planetoid(root=args.ds_root+'/Cora', name='Cora', split='full')
-        elif dataset_name == 'CiteSeer':
-            dataset = Planetoid(root=args.ds_root+'/CiteSeer', name='CiteSeer', split='full')
-        elif dataset_name == 'WikiCS':
-            dataset = WikiCS(root=args.ds_root+'/WikiCS')
-        data = dataset[0]
-        graph = to_networkx(data, to_undirected=True)
-        # node_labels = data.y[list(graph.nodes)].numpy()
-        # len(graph.nodes()), len(graph.edges())
-        features = data.x.numpy()
-        target = data.y.numpy()[..., np.newaxis]
-
-    return graph, features, target
+        return graph, features, target
+    if args.dataset_name in ['PubMed', 'Cora', 'CiteSeer', 'WikiCS']:
+        return load_citation_dataset(args.dataset_name, args.ds_root)
+    raise ValueError(f"Unknown dataset: {args.dataset_name}")
 
 
 import os

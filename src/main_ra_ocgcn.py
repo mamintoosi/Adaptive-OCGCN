@@ -1,69 +1,61 @@
 """
-Main entry point for Role-Aware Overlapping Cluster-GCN (RA-OCGCN).
+Main entry point for Adaptive Overlapping Cluster-GCN (Adaptive-OCGCN).
 
-This script runs experiments comparing:
+This script runs a comparison of overlap selection strategies:
 1. Original Cluster-GCN (no overlap)
-2. Original Overlapping Cluster-GCN
-3. Role-Aware Overlapping Cluster-GCN (RA-OCGCN)
+2. Original Overlapping Cluster-GCN (global WMC)
+3. Entropy-Adaptive WMC
+4. Margin-Adaptive WMC
+5. Hybrid-Adaptive WMC (max of entropy and margin)
+
+Run: python main_ra_ocgcn.py --dataset-name Cora
 """
 import os
 import sys
 import time
-import torch
-import numpy as np
-import pandas as pd
 from datetime import datetime
 
-# Add src to path
+import numpy as np
+import pandas as pd
+import torch
+
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 from parser import parameter_parser
 from utils import dataset_reader
 from clustering import ClusteringMachine
-from ra_ocgcn_clustering import RAOClusteringMachine
-from clustergcn import ClusterGCNTrainer
+from ra_ocgcn_clustering import AdaptiveWMCClusteringMachine
+from clustergcn import ClusterGCNTrainer, seed_everything
 
 
-def run_experiment(args, method="original"):
+def run_experiment(args, graph, features, target, method, danmf_result=None):
     """
     Run a single experiment.
-    
-    Args:
-        args: Arguments object
-        method: "original" or "ra_ocgcn"
-    
-    Returns:
-        dict with results
+    :param args: Arguments object.
+    :param method: "no_overlap", "original_wmc", "entropy_adaptive_wmc",
+                   "margin_adaptive_wmc" or "hybrid_adaptive_wmc".
+    :return: dict with results.
     """
-    torch.manual_seed(args.seed)
-    if torch.cuda.is_available():
-        torch.cuda.manual_seed(args.seed)
-    
+    seed_everything(args.seed)
     start = time.time()
-    
-    # Load dataset
-    graph, features, target = dataset_reader(args)
-    
-    # Create clustering machine
-    if method == "ra_ocgcn":
-        clustering_machine = RAOClusteringMachine(args, graph, features, target)
-    else:
+
+    if method == "no_overlap":
         clustering_machine = ClusteringMachine(args, graph, features, target)
-    
-    clustering_machine.decompose()
-    
-    # Train and evaluate
+    else:
+        clustering_machine = AdaptiveWMCClusteringMachine(args, graph, features, target)
+
+    clustering_machine.decompose(danmf_result=danmf_result)
+
     trainer = ClusterGCNTrainer(args, clustering_machine)
     trainer.train()
-    score = trainer.test()
-    
+    scores = trainer.test()
     elapsed = time.time() - start
-    
-    # Calculate overlap statistics
-    avg_overlap = np.sum(clustering_machine.ClusterNodes) / len(graph.nodes())
-    
+
+    avg_overlap = float(np.sum(clustering_machine.ClusterNodes)) / len(graph.nodes())
+
     return {
-        "accuracy": score,
+        "f1_micro": scores["micro"],
+        "f1_macro": scores["macro"],
         "runtime": elapsed,
         "avg_overlap": avg_overlap,
         "num_clusters": len(clustering_machine.clusters),
@@ -71,157 +63,72 @@ def run_experiment(args, method="original"):
     }
 
 
-def run_ablation_study(args):
-    """
-    Run ablation study for RA-OCGCN.
-    
-    Ablations:
-    A. Original method (no overlap)
-    B. Boundary only
-    C. Boundary + uncertainty
-    D. Boundary + entropy
-    E. Boundary + uncertainty + entropy (full RA-OCGCN)
-    """
-    results = []
-    
-    # A. Original method (no overlap)
-    print("  A. Original Cluster-GCN (no overlap)...")
-    args.clustering_overlap = False
-    result = run_experiment(args, method="original")
-    result["variant"] = "A_Original"
-    result["description"] = "No overlap"
-    results.append(result)
-    print(f"    Accuracy: {result['accuracy']:.4f}")
-    
-    # B. Boundary only
-    print("  B. Boundary only...")
-    args.clustering_overlap = True
-    args.alpha = 1.0
-    args.beta = 0.0
-    args.gamma = 0.0
-    result = run_experiment(args, method="ra_ocgcn")
-    result["variant"] = "B_Boundary"
-    result["description"] = "Boundary only"
-    results.append(result)
-    print(f"    Accuracy: {result['accuracy']:.4f}")
-    
-    # C. Boundary + uncertainty
-    print("  C. Boundary + uncertainty...")
-    args.alpha = 1.0
-    args.beta = 0.5
-    args.gamma = 0.0
-    result = run_experiment(args, method="ra_ocgcn")
-    result["variant"] = "C_BoundaryUncertainty"
-    result["description"] = "Boundary + uncertainty"
-    results.append(result)
-    print(f"    Accuracy: {result['accuracy']:.4f}")
-    
-    # D. Boundary + entropy
-    print("  D. Boundary + entropy...")
-    args.alpha = 1.0
-    args.beta = 0.0
-    args.gamma = 0.5
-    result = run_experiment(args, method="ra_ocgcn")
-    result["variant"] = "D_BoundaryEntropy"
-    result["description"] = "Boundary + entropy"
-    results.append(result)
-    print(f"    Accuracy: {result['accuracy']:.4f}")
-    
-    # E. Full RA-OCGCN
-    print("  E. Full RA-OCGCN...")
-    args.alpha = 1.0
-    args.beta = 0.5
-    args.gamma = 0.5
-    result = run_experiment(args, method="ra_ocgcn")
-    result["variant"] = "E_FullRAOCGCN"
-    result["description"] = "Boundary + uncertainty + entropy"
-    results.append(result)
-    print(f"    Accuracy: {result['accuracy']:.4f}")
-    
-    return results
-
-
 def main():
     """Main function."""
     print(f"\n{'='*70}")
-    print(f"  Role-Aware Overlapping Cluster-GCN (RA-OCGCN)")
+    print(f"  Adaptive Overlapping Cluster-GCN (Adaptive-OCGCN)")
     print(f"  Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*70}\n")
-    
-    # Datasets
+
+    args = parameter_parser()
+    args.clustering_overlap = True
+    args.membership_closeness = 0.3
+    args.adaptation_lambda = 0.5
+
+    methods = [
+        ("no_overlap", "Cluster-GCN (no overlap)"),
+        ("original_wmc", "OCGCN (global WMC=0.30)"),
+        ("entropy_adaptive_wmc", "Entropy-Adaptive (lambda=0.5)"),
+        ("margin_adaptive_wmc", "Margin-Adaptive (lambda=0.5)"),
+        ("hybrid_adaptive_wmc", "Hybrid-Adaptive (lambda=0.5)"),
+    ]
+
     datasets = ["Cora", "CiteSeer", "PubMed"]
-    
     all_results = []
-    
+
     for dataset in datasets:
         print(f"\n{'='*70}")
         print(f"  Dataset: {dataset}")
         print(f"{'='*70}")
-        
-        # Parse arguments
-        sys.argv = [
-            'main_ra_ocgcn.py',
-            '--dataset-name', dataset,
-            '--epochs', '10',
-            '--ds-root', './tmp',
-            '--clustering-overlap', 'True',
-            '--membership-closeness', '0.3',
-            '--test-ratio', '0.3',
-        ]
-        
-        args = parameter_parser()
-        
-        # Add role-aware parameters
-        args.alpha = 1.0
-        args.beta = 0.5
-        args.gamma = 0.5
-        args.overlap_strategy = 'adaptive'
-        args.overlap_threshold = 0.5
-        args.warmup_epochs = 10
-        
-        # Run ablation study
-        print("\nRunning ablation study...")
-        ablation_results = run_ablation_study(args)
-        
-        for result in ablation_results:
+
+        args.dataset_name = dataset
+        graph, features, target = dataset_reader(args)
+        print(f"  Nodes: {graph.number_of_nodes()}, Edges: {graph.number_of_edges()}")
+
+        # Cache the DANMF decomposition once per dataset so all strategies
+        # share identical community memberships (fair comparison).
+        danmf_result = None
+
+        for method, label in methods:
+            args.clustering_overlap = (method != "no_overlap")
+            result = run_experiment(args, graph, features, target, method, danmf_result)
             result["dataset"] = dataset
+            result["method"] = label
+            result["strategy"] = method
             all_results.append(result)
-        
-        print(f"\nDataset {dataset} completed.")
-    
+            print(f"  {label:<40} F1(micro)={result['f1_micro']:.4f}  "
+                  f"F1(macro)={result['f1_macro']:.4f}  overlap={result['avg_overlap']:.2f}x")
+
+        # NOTE: for a fully independent per-method clustering one would fit
+        # DANMF per method; here caching gives a paired design.
+
     # Save results
     results_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), "results")
     os.makedirs(results_dir, exist_ok=True)
-    
     df = pd.DataFrame(all_results)
     csv_path = os.path.join(results_dir, "ra_ocgcn_results.csv")
     df.to_csv(csv_path, index=False)
     print(f"\nResults saved: {csv_path}")
-    
-    # Display summary
+
+    # Summary
     print(f"\n{'='*70}")
     print(f"  SUMMARY")
     print(f"{'='*70}")
-    
-    pivot = df.pivot_table(
-        index='variant',
-        columns='dataset',
-        values='accuracy',
-        aggfunc='first'
-    )
-    pivot['Mean'] = pivot.mean(axis=1)
-    print("\nAccuracy by variant:")
+    pivot = df.pivot_table(index="method", columns="dataset", values="f1_macro", aggfunc="first")
+    pivot["Mean"] = pivot.mean(axis=1)
+    print("\nF1 Macro by strategy:")
     print(pivot.round(4).to_string())
-    
-    # Improvement analysis
-    print("\n\nImprovement over Original:")
-    for dataset in datasets:
-        ds_data = df[df['dataset'] == dataset]
-        original = ds_data[ds_data['variant'] == 'A_Original']['accuracy'].values[0]
-        full_ra = ds_data[ds_data['variant'] == 'E_FullRAOCGCN']['accuracy'].values[0]
-        improvement = ((full_ra - original) / original) * 100
-        print(f"  {dataset}: {improvement:+.2f}%")
-    
+
     print(f"\n{'='*70}")
     print(f"  Completed: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
     print(f"{'='*70}")

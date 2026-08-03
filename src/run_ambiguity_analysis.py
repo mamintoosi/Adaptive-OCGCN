@@ -22,17 +22,13 @@ from scipy.stats import spearmanr
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from overlap_selection.common import compute_membership_entropy, compute_membership_margin
 from overlap_selection import create_selector
-from hetero_utils import HETERO_LOADERS
+from clustering import fit_danmf
+from experiment_utils import load_dataset as shared_load_dataset, NUM_LABELS
 
 
-def run_danmf(graph, cluster_count):
-    model = DANMF(layers=[32, 2 * cluster_count], pre_iterations=500, iterations=200)
-    model.fit(graph)
-    P = normalize(model._P, axis=1)
-    values = model.get_memberships().values()
-    values_list = list(values)
-    clusters = list(set(values_list))
-    return P, clusters
+def run_danmf(graph, cluster_count, seed=42):
+    result = fit_danmf(graph, cluster_count, seed=seed)
+    return result["P"], result["clusters"]
 
 
 def compute_node_metrics(P, graph, cluster_membership, clusters):
@@ -91,25 +87,7 @@ def analyze_dataset(ds_name, ds_root, num_labels):
     print(f"  Analyzing: {ds_name}")
     print(f"{'='*60}")
 
-    is_hetero = ds_name in ('ACM', 'DBLP', 'IMDB')
-    if is_hetero:
-        loader = HETERO_LOADERS[ds_name]
-        graph, features, target = loader(ds_root)
-        isolates = list(nx.isolates(graph))
-        if isolates:
-            graph.remove_nodes_from(isolates)
-            features = np.delete(features, isolates, axis=0)
-            non_isolates = [n for n in range(len(target)) if n not in set(isolates)]
-            target = target[non_isolates]
-        mapping = {old: new for new, old in enumerate(sorted(graph.nodes()))}
-        graph = nx.relabel_nodes(graph, mapping)
-    else:
-        import sys as _sys
-        _sys.argv = ['main.py', '--dataset-name', ds_name, '--ds-root', ds_root]
-        from parser import parameter_parser
-        from utils import dataset_reader
-        args = parameter_parser()
-        graph, features, target = dataset_reader(args)
+    graph, features, target = shared_load_dataset(ds_name, ds_root)
 
     P, clusters = run_danmf(graph, num_labels[ds_name])
 
@@ -164,7 +142,7 @@ def main():
     results_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'results')
     os.makedirs(results_dir, exist_ok=True)
 
-    num_labels = {'Cora': 7, 'CiteSeer': 6, 'PubMed': 3, 'ACM': 3, 'DBLP': 4, 'IMDB': 5}
+    num_labels = NUM_LABELS
     all_stats = []
     all_strat = []
 

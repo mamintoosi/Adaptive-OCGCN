@@ -9,9 +9,8 @@ from typing import List
 import numpy as np
 import torch
 from sklearn.model_selection import train_test_split
-from sklearn.preprocessing import normalize
-from karateclub.community_detection.overlapping import DANMF
 
+from clustering import fit_danmf
 from overlap_selection import create_selector
 
 
@@ -19,10 +18,11 @@ class AdaptiveWMCClusteringMachine:
     """
     Clustering machine with adaptive WMC overlap selection.
 
-    Supports three modes via the overlap_strategy parameter:
+    Supports four modes via the overlap_strategy parameter:
     - original_wmc: global threshold (baseline)
     - entropy_adaptive_wmc: threshold adapts to membership entropy
     - margin_adaptive_wmc: threshold adapts to membership margin
+    - hybrid_adaptive_wmc: threshold adapts to max(entropy, margin)
     """
 
     def __init__(self, args, graph, features, target):
@@ -40,13 +40,13 @@ class AdaptiveWMCClusteringMachine:
         self.feature_count: int = self.features.shape[1]
         self.class_count: int = int(np.max(self.target) + 1)
 
-    def decompose(self) -> None:
+    def decompose(self, danmf_result=None) -> None:
         """Decompose graph using DANMF clustering + adaptive overlap."""
-        self.danmf_clustering()
+        self.danmf_clustering(danmf_result=danmf_result)
         self.general_data_partitioning()
         self.transfer_edges_and_nodes()
 
-    def danmf_clustering(self) -> None:
+    def danmf_clustering(self, danmf_result=None) -> None:
         """Perform DANMF clustering with selectable overlap strategy."""
         num_labels = {
             'CiteSeer': 6, 'Cora': 7, 'PubMed': 3, 'WikiCS': 10,
@@ -54,19 +54,22 @@ class AdaptiveWMCClusteringMachine:
         }
 
         cluster_count = num_labels.get(self.args.dataset_name, self.args.cluster_number)
-        model = DANMF(
-            layers=[32, 2 * cluster_count],
-            pre_iterations=500,
-            iterations=200,
-        )
-        model.fit(self.graph)
 
-        values = model.get_memberships().values()
-        values_list = list(values)
+        if danmf_result is not None:
+            P = danmf_result["P"]
+            self.clusters: List[int] = list(danmf_result["clusters"])
+            values_list = [danmf_result["hard_membership"][node] for node in sorted(self.graph.nodes())]
+        else:
+            result = fit_danmf(
+                self.graph,
+                cluster_count,
+                seed=getattr(self.args, "seed", 42),
+            )
+            P = result["P"]
+            self.clusters = list(result["clusters"])
+            values_list = [result["hard_membership"][node] for node in sorted(self.graph.nodes())]
 
-        P = normalize(model._P, axis=1)
         self.membership_matrix: np.ndarray = P
-        self.clusters: List[int] = list(set(values_list))
 
         if not self.args.clustering_overlap:
             self.cluster_membership = {

@@ -1,11 +1,17 @@
 import torch
 import random
 import numpy as np
-from tqdm import trange, tqdm
+from tqdm import trange
 from layers import StackedGCN
-from torch.autograd import Variable
 from sklearn.metrics import f1_score
-from sklearn.metrics import accuracy_score
+
+def seed_everything(seed):
+    """Seed all RNGs (torch, numpy, python) for reproducibility."""
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
 
 class ClusterGCNTrainer(object):
     """
@@ -36,7 +42,6 @@ class ClusterGCNTrainer(object):
         :return node_count: Number of nodes.
         """
         edges = self.clustering_machine.sg_edges[cluster].to(self.device)
-        macro_nodes = self.clustering_machine.sg_nodes[cluster].to(self.device)
         train_nodes = self.clustering_machine.sg_train_nodes[cluster].to(self.device)
         features = self.clustering_machine.sg_features[cluster].to(self.device)
         target = self.clustering_machine.sg_targets[cluster].to(self.device).squeeze()
@@ -65,7 +70,6 @@ class ClusterGCNTrainer(object):
         :return target: Target vector.
         """
         edges = self.clustering_machine.sg_edges[cluster].to(self.device)
-        macro_nodes = self.clustering_machine.sg_nodes[cluster].to(self.device)
         test_nodes = self.clustering_machine.sg_test_nodes[cluster].to(self.device)
         features = self.clustering_machine.sg_features[cluster].to(self.device)
         target = self.clustering_machine.sg_targets[cluster].to(self.device).squeeze()
@@ -78,7 +82,6 @@ class ClusterGCNTrainer(object):
         """
         Training a model.
         """
-        # print("\nTraining started.")
         epochs = trange(self.args.epochs, desc = "Train Loss")
         self.optimizer = torch.optim.Adam(self.model.parameters(), lr=self.args.learning_rate)
         self.model.train()
@@ -96,7 +99,8 @@ class ClusterGCNTrainer(object):
 
     def test(self):
         """
-        Scoring the test and printing the F-1 score.
+        Scoring the test and returning micro and macro F1 scores.
+        :return scores: dict with "micro" and "macro" F1.
         """
         self.model.eval()
         self.predictions = []
@@ -107,6 +111,6 @@ class ClusterGCNTrainer(object):
             self.targets.append(target.cpu().detach().numpy())
         self.targets = np.concatenate(self.targets)
         self.predictions = np.concatenate(self.predictions).argmax(1)
-        score = f1_score(self.targets, self.predictions, average="micro")
-        return score
-        # print("\nF-1 score: {:.4f}".format(score))
+        micro = f1_score(self.targets, self.predictions, average="micro")
+        macro = f1_score(self.targets, self.predictions, average="macro")
+        return {"micro": micro, "macro": macro}

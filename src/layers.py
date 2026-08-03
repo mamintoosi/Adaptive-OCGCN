@@ -33,12 +33,19 @@ class StackedGCN(torch.nn.Module):
         :param edges: Edge list LongTensor.
         :param features: Feature matrix input FLoatTensor.
         :return predictions: Prediction matrix output FLoatTensor.
+
+        Matches the original OCGCN architecture: ReLU after every hidden layer
+        and dropout applied only after the last hidden layer (before the
+        output projection).
         """
-        for i, _ in enumerate(self.args.layers[:-2]):
-            features = torch.nn.functional.relu(self.layers[i](features, edges))
-            if i>1:
-                features = torch.nn.functional.dropout(features, p = self.args.dropout, training = self.training)
-        features = self.layers[i+1](features, edges)
+        for i in range(len(self.layers) - 1):
+            features = self.layers[i](features, edges)
+            features = torch.nn.functional.relu(features)
+            if i == len(self.layers) - 2:
+                features = torch.nn.functional.dropout(
+                    features, p=self.args.dropout, training=self.training
+                )
+        features = self.layers[-1](features, edges)  # final output projection
         predictions = torch.nn.functional.log_softmax(features, dim=1)
         return predictions
 
@@ -58,9 +65,12 @@ class ListModule(torch.nn.Module):
 
     def __getitem__(self, idx):
         """
-        Getting the indexed layer.
+        Getting the indexed layer. Supports negative indices like a list.
         """
-        if idx < 0 or idx >= len(self._modules):
+        n = len(self._modules)
+        if idx < 0:
+            idx += n
+        if idx < 0 or idx >= n:
             raise IndexError('index {} is out of range'.format(idx))
         it = iter(self._modules.values())
         for i in range(idx):

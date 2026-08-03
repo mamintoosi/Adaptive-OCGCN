@@ -27,7 +27,14 @@ WMC_i = WMC_base * (1 - lambda * A(i))
 
 Nodes caught between two dominant communities get a lower threshold.
 
-Both methods eliminate the need for manual WMC tuning while achieving competitive performance across diverse graph datasets.
+**Hybrid-Adaptive WMC** — uses the stronger of the two signals per node:
+
+```
+a_i = max(H_norm(i), A(i))
+WMC_i = WMC_base * (1 - lambda * a_i)
+```
+
+All methods eliminate the need for manual WMC tuning while achieving competitive performance across diverse graph datasets.
 
 ## Project Structure
 
@@ -38,29 +45,31 @@ Adaptive-OCGCN/
 │   │   ├── common.py                # Base class + entropy/margin utilities
 │   │   ├── original_wmc.py          # Global WMC baseline
 │   │   ├── entropy_adaptive_wmc.py  # Entropy-adaptive variant
-│   │   └── margin_adaptive_wmc.py   # Margin-adaptive variant
-│   ├── clustergcn.py                # Cluster-GCN implementation
-│   ├── clustering.py                # Graph clustering (Louvain, spectral)
-│   ├── ra_ocgcn_clustering.py       # Role-aware OCGCN clustering pipeline
+│   │   ├── margin_adaptive_wmc.py   # Margin-adaptive variant
+│   │   └── hybrid_adaptive_wmc.py   # Hybrid (max) variant
+│   ├── clustergcn.py                # Cluster-GCN implementation (micro+macro F1)
+│   ├── clustering.py                # Graph clustering (DANMF, spectral, random)
+│   ├── ra_ocgcn_clustering.py       # Adaptive-WMC clustering pipeline
 │   ├── layers.py                    # GCN layers
 │   ├── utils.py                     # Data loading, evaluation utilities
 │   ├── hetero_utils.py              # Heterogeneous graph utilities
+│   ├── experiment_utils.py          # Shared experiment helpers (seeding, DANMF cache)
 │   ├── parser.py                    # Argument parsing
 │   ├── main.py                      # Main entry point
-│   ├── main_ra_ocgcn.py             # Role-aware OCGCN entry point
+│   ├── main_ra_ocgcn.py             # Adaptive-OCGCN strategy comparison entry point
 │   ├── run_full_experiments.py      # Full experiment suite
-│   ├── run_ablation.py              # Ablation study runner
+│   ├── run_ablation.py              # Ablation study runner (λ sensitivity)
 │   ├── run_ambiguity_analysis.py    # Ambiguity analysis
 │   ├── run_full_ambiguity_analysis.py
-│   ├── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison
+│   ├── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison + stats
 │   └── run_mag_evaluation.py        # OGBN-MAG evaluation
 ├── results/                         # Experimental results
-│   ├── plots/                       # Generated figures (13 PNGs)
+│   ├── plots/                       # Generated figures
 │   └── *.csv                        # Raw and summary results
 ├── adaptive-ocgcn-latex/            # Paper manuscript
 │   ├── adaptive_ocgcn.tex           # LaTeX source
 │   ├── adaptive_ocgcn.pdf           # Compiled PDF
-│   ├── figures/                     # Paper figures
+│   ├── figures/                     # Paper figures (13 PNGs)
 │   └── generate_plots.py            # Figure generation script
 ├── docs/
 │   ├── ALGORITHM_OVERVIEW.md        # Algorithm description
@@ -94,6 +103,10 @@ assignments = selector.select_overlap(P, valid_clusters)
 selector = create_selector("margin_adaptive_wmc", membership_closeness=0.3, lam=0.5)
 assignments = selector.select_overlap(P, valid_clusters)
 
+# Hybrid (max of entropy and margin)
+selector = create_selector("hybrid_adaptive_wmc", membership_closeness=0.3, lam=0.5)
+assignments = selector.select_overlap(P, valid_clusters)
+
 # Original global WMC (baseline)
 selector = create_selector("original_wmc", membership_closeness=0.3)
 assignments = selector.select_overlap(P, valid_clusters)
@@ -102,14 +115,15 @@ assignments = selector.select_overlap(P, valid_clusters)
 ### Running Experiments
 
 ```bash
+```bash
 # Full experiment suite (6 datasets, 10 seeds)
-python src/run_full_experiments.py
+python src/run_full_experiments.py --seeds 10
 
 # Ablation study (lambda sensitivity)
-python src/run_ablation.py
+python src/run_ablation.py --seeds 10
 
-# Fixed WMC vs adaptive comparison
-python src/run_fixed_wmc_comparison.py
+# Fixed WMC vs adaptive comparison + statistical tests (20 seeds)
+python src/run_fixed_wmc_comparison.py --seeds 20
 
 # Ambiguity analysis
 python src/run_full_ambiguity_analysis.py
@@ -125,9 +139,19 @@ pdflatex adaptive_ocgcn.tex
 ## Key Results
 
 - Adaptive thresholding eliminates the WMC hyperparameter while maintaining competitive performance
-- Entropy-Adaptive with lambda=0.50 is a reasonable default across all datasets
+- Entropy-Adaptive (and Hybrid-Adaptive) with lambda=0.50 are reasonable defaults across all datasets
 - High-entropy nodes are 69-95% overlap candidates vs 0-17% for low-entropy nodes
-- At matched overlap ratios, adaptive methods win on 4/6 datasets (+0.001 to +0.023 F1)
+- At matched overlap ratios, adaptive methods win on most datasets
+- Fully seeded runs (torch/numpy/python/DANMF) + cached DANMF per (dataset, seed) give a clean paired design
+- Both micro and macro F1 are reported
+
+## Installation
+
+```bash
+pip install -r requirements.txt
+```
+
+The `src/` modules must be importable; run scripts from the repository root or add `src/` to `PYTHONPATH`.
 
 ## Citation
 

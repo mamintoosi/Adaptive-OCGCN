@@ -20,45 +20,22 @@ from karateclub.community_detection.overlapping import DANMF
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from overlap_selection.common import compute_membership_entropy, compute_membership_margin
 from overlap_selection import create_selector
-from hetero_utils import HETERO_LOADERS
+from clustering import fit_danmf
+from experiment_utils import load_dataset as shared_load_dataset, NUM_LABELS
 
 
 # ============================================================
 # TASK 1: Collect Node-Level Statistics
 # ============================================================
 
-def run_danmf(graph, cluster_count):
-    model = DANMF(layers=[32, 2 * cluster_count], pre_iterations=500, iterations=200)
-    model.fit(graph)
-    P = normalize(model._P, axis=1)
-    values = model.get_memberships().values()
-    values_list = list(values)
-    clusters = list(set(values_list))
-    return P, clusters
+def run_danmf(graph, cluster_count, seed=42):
+    result = fit_danmf(graph, cluster_count, seed=seed)
+    return result["P"], result["clusters"]
 
 
 def load_dataset(ds_name, ds_root, num_labels):
-    """Load dataset and return graph, features, target."""
-    is_hetero = ds_name in ('ACM', 'DBLP', 'IMDB')
-    if is_hetero:
-        loader = HETERO_LOADERS[ds_name]
-        graph, features, target = loader(ds_root)
-        isolates = list(nx.isolates(graph))
-        if isolates:
-            graph.remove_nodes_from(isolates)
-            features = np.delete(features, isolates, axis=0)
-            non_isolates = [n for n in range(len(target)) if n not in set(isolates)]
-            target = target[non_isolates]
-        mapping = {old: new for new, old in enumerate(sorted(graph.nodes()))}
-        graph = nx.relabel_nodes(graph, mapping)
-    else:
-        import sys as _sys
-        _sys.argv = ['main.py', '--dataset-name', ds_name, '--ds-root', ds_root]
-        from parser import parameter_parser
-        from utils import dataset_reader
-        args = parameter_parser()
-        graph, features, target = dataset_reader(args)
-    return graph, features, target
+    """Load dataset and return graph, features, target (shared loader)."""
+    return shared_load_dataset(ds_name, ds_root)
 
 
 def compute_node_statistics(ds_name, graph, P, clusters, cluster_membership, logits=None):
@@ -212,6 +189,49 @@ def dataset_comparison(all_stats):
     return pd.DataFrame(results)
 
 
+def _savefig(fig, path):
+    """
+    Save a figure, robust to Windows file-lock errors.
+
+    Overwriting an existing PNG on Windows can raise OSError [Errno 22]
+    when the file is momentarily held (thumbnail cache, viewers, etc.).
+    We remove any stale file first and retry once.
+    """
+    for attempt in range(2):
+        try:
+            if os.path.exists(path):
+                try:
+                    os.remove(path)
+                except OSError:
+                    pass
+            fig.savefig(path, dpi=150)
+            return
+        except OSError:
+            import time
+            time.sleep(0.5)
+    # Final fallback: save without touching the existing file name.
+    fig.savefig(path, dpi=150)
+
+
+def _safe_terciles(series):
+    """
+    Split a series into up to three terciles, robust to duplicate bin edges.
+
+    pd.qcut(..., duplicates='drop') collapses bins when many values are
+    identical (common for entropy, where many nodes have entropy ~0), which
+    raises ValueError when a fixed label list is supplied. We instead bin
+    without labels and then map integer codes to 'Low'/'Med'/'High'.
+    """
+    labels = ['Low', 'Med', 'High']
+    try:
+        codes = pd.qcut(series, 3, labels=False, duplicates='drop')
+    except ValueError:
+        return pd.Series('Low', index=series.index)
+    n_bins = int(codes.max()) + 1 if len(codes) else 1
+    mapping = {i: labels[i] for i in range(min(n_bins, 3))}
+    return codes.map(mapping)
+
+
 # ============================================================
 # TASK 5: Visualizations
 # ============================================================
@@ -243,7 +263,7 @@ def create_visualizations(all_stats, results_dir):
         ax.set_ylabel('Count')
     plt.suptitle('Membership Entropy Distributions', fontsize=14)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, 'entropy_histograms.png'), dpi=150)
+    _savefig(plt.gcf(), os.path.join(plot_dir, 'entropy_histograms.png'))
     plt.close()
 
     # 2. Ambiguity histograms
@@ -257,7 +277,7 @@ def create_visualizations(all_stats, results_dir):
         ax.set_ylabel('Count')
     plt.suptitle('Ambiguity Score Distributions', fontsize=14)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, 'ambiguity_histograms.png'), dpi=150)
+    _savefig(plt.gcf(), os.path.join(plot_dir, 'ambiguity_histograms.png'))
     plt.close()
 
     # 3. Overlap ratio vs entropy (box plots by tercile)
@@ -265,7 +285,7 @@ def create_visualizations(all_stats, results_dir):
     for idx, ds_name in enumerate(datasets):
         ax = axes[idx // 3, idx % 3]
         df = all_stats[ds_name].copy()
-        df['entropy_tercile'] = pd.qcut(df['entropy'], 3, labels=['Low', 'Med', 'High'], duplicates='drop')
+        df['entropy_tercile'] = _safe_terciles(df['entropy'])
         overlap_by_tercile = df.groupby('entropy_tercile')['is_overlap'].mean()
         overlap_by_tercile.plot(kind='bar', ax=ax, color=['#2196F3', '#FFC107', '#F44336'])
         ax.set_title(f'{ds_name}')
@@ -274,7 +294,7 @@ def create_visualizations(all_stats, results_dir):
         ax.set_ylim(0, 1)
     plt.suptitle('Overlap Ratio by Entropy Tercile', fontsize=14)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, 'overlap_vs_entropy.png'), dpi=150)
+    _savefig(plt.gcf(), os.path.join(plot_dir, 'overlap_vs_entropy.png'))
     plt.close()
 
     # 4. Scatter: entropy vs n_clusters
@@ -288,7 +308,7 @@ def create_visualizations(all_stats, results_dir):
         ax.set_ylabel('Clusters Assigned')
     plt.suptitle('Entropy vs Clusters Assigned', fontsize=14)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, 'entropy_vs_clusters.png'), dpi=150)
+    _savefig(plt.gcf(), os.path.join(plot_dir, 'entropy_vs_clusters.png'))
     plt.close()
 
     # 5. Scatter: ambiguity vs overlap
@@ -302,7 +322,7 @@ def create_visualizations(all_stats, results_dir):
         ax.set_ylabel('Is Overlap')
     plt.suptitle('Ambiguity vs Overlap Assignment', fontsize=14)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, 'ambiguity_vs_overlap.png'), dpi=150)
+    _savefig(plt.gcf(), os.path.join(plot_dir, 'ambiguity_vs_overlap.png'))
     plt.close()
 
     # 6. Dataset comparison bar chart
@@ -329,7 +349,7 @@ def create_visualizations(all_stats, results_dir):
 
     plt.suptitle('Dataset Comparison', fontsize=14)
     plt.tight_layout()
-    plt.savefig(os.path.join(plot_dir, 'dataset_comparison.png'), dpi=150)
+    _savefig(plt.gcf(), os.path.join(plot_dir, 'dataset_comparison.png'))
     plt.close()
 
     print(f"  Plots saved to: {plot_dir}/")
@@ -344,7 +364,7 @@ def main():
     results_dir = os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))), 'results')
     os.makedirs(results_dir, exist_ok=True)
 
-    num_labels = {'Cora': 7, 'CiteSeer': 6, 'PubMed': 3, 'ACM': 3, 'DBLP': 4, 'IMDB': 5}
+    num_labels = NUM_LABELS
     datasets = ['ACM', 'DBLP', 'IMDB', 'Cora', 'CiteSeer', 'PubMed']
 
     all_stats = {}
@@ -422,7 +442,7 @@ def main():
         )]
         print(f"\n  {ds_name} (by entropy terciles):")
         ds_data = all_stats[ds_name].copy()
-        ds_data['tercile'] = pd.qcut(ds_data['entropy'], 3, labels=['Low', 'Med', 'High'], duplicates='drop')
+        ds_data['tercile'] = _safe_terciles(ds_data['entropy'])
         for t in ['Low', 'Med', 'High']:
             subset = ds_data[ds_data['tercile'] == t]
             print(f"    {t}: n={len(subset)}, overlap={subset['is_overlap'].mean():.3f}, "

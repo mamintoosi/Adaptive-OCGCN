@@ -2,11 +2,10 @@
 Overlap selection strategies for Overlapping Cluster-GCN.
 
 Provides three selectable modes for determining which nodes belong to
-multiple clusters based on the DANMF membership matrix:
-
-1. original_wmc — global threshold (baseline from the original paper)
-2. entropy_adaptive_wmc — threshold adapts to membership entropy
-3. margin_adaptive_wmc — threshold adapts to membership margin
+multiple clusters based on the DANMF membership matrix:    1. original_wmc — global threshold (baseline from the original paper)
+    2. entropy_adaptive_wmc — threshold adapts to membership entropy
+    3. margin_adaptive_wmc — threshold adapts to membership margin
+    4. hybrid_adaptive_wmc — threshold adapts to max(entropy, margin)
 
 All strategies operate on the normalized DANMF membership matrix P
 and produce a list of cluster assignments per node.
@@ -15,11 +14,13 @@ from overlap_selection.common import OverlapSelector, compute_membership_entropy
 from overlap_selection.original_wmc import OriginalWMCSelector
 from overlap_selection.entropy_adaptive_wmc import EntropyAdaptiveWMCSelector
 from overlap_selection.margin_adaptive_wmc import MarginAdaptiveWMCSelector
+from overlap_selection.hybrid_adaptive_wmc import HybridAdaptiveWMCSelector
 
 SELECTORS = {
     "original_wmc": OriginalWMCSelector,
     "entropy_adaptive_wmc": EntropyAdaptiveWMCSelector,
     "margin_adaptive_wmc": MarginAdaptiveWMCSelector,
+    "hybrid_adaptive_wmc": HybridAdaptiveWMCSelector,
 }
 
 
@@ -28,7 +29,8 @@ def create_selector(strategy: str, **kwargs) -> OverlapSelector:
     Factory function to create an overlap selector.
 
     Args:
-        strategy: One of "original_wmc", "entropy_adaptive_wmc", "margin_adaptive_wmc"
+        strategy: One of "original_wmc", "entropy_adaptive_wmc", "margin_adaptive_wmc",
+                  "hybrid_adaptive_wmc"
         **kwargs: Strategy-specific parameters (membership_closeness, lam)
 
     Returns:
