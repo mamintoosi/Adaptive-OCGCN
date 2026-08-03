@@ -296,6 +296,81 @@ def fig_gain_vs_variance(df):
     print('Saved: gain_vs_variance.png')
 
 
+# ═══════════════════════════════════════════════════════════════════════════
+# Figure 9: Training time + one-time DANMF cost
+# ═══════════════════════════════════════════════════════════════════════════
+def fig_runtime():
+    path = os.path.join(RESULTS, 'runtime_summary.csv')
+    if not os.path.exists(path):
+        print('SKIP: runtime_summary.csv not found (run src/measure_runtime.py)')
+        return
+    rt = pd.read_csv(path)
+    rt = rt.set_index('dataset').reindex(DATASETS)
+
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(13, 4.5), gridspec_kw={'width_ratios': [2, 1]})
+
+    # Left: per-run GCN training time per method
+    cols = ['train_no_overlap_s', 'train_wmc030_s', 'train_margin_s', 'train_hybrid_s']
+    names = ['No Overlap', 'WMC=0.30', 'Margin', 'Hybrid']
+    colors = ['#b0b0b0', '#7faadb', '#93c47d', '#c9a0dc']
+    x = np.arange(len(DATASETS))
+    w = 0.19
+    for j, (col, name, color) in enumerate(zip(cols, names, colors)):
+        ax1.bar(x + (j - 1.5) * w, rt[col], w, label=name, color=color,
+                edgecolor='black', linewidth=0.5)
+    ax1.set_xticks(x)
+    ax1.set_xticklabels(DATASETS)
+    ax1.set_ylabel('Training time (s / run)')
+    ax1.set_title('Per-Run GCN Training Time (20 seeds)')
+    ax1.legend(framealpha=0.9)
+    ax1.grid(axis='y', alpha=0.3)
+
+    # Right: one-time DANMF decomposition cost
+    ax2.bar(x, rt['danmf_fit_s'], color='#e06666', edgecolor='black', linewidth=0.5)
+    for i, v in enumerate(rt['danmf_fit_s']):
+        ax2.text(i, v + 0.5, f'{v:.1f}', ha='center', va='bottom', fontsize=9)
+    ax2.set_xticks(x)
+    ax2.set_xticklabels(DATASETS)
+    ax2.set_ylabel('Time (s)')
+    ax2.set_title('One-Time DANMF Decomposition')
+    ax2.grid(axis='y', alpha=0.3)
+
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, 'runtime_comparison.png'))
+    plt.close()
+    print('Saved: runtime_comparison.png')
+
+
+def fig_standard_baselines():
+    """Full-batch GCN / GraphSAGE / GAT and random-partition control."""
+    path = os.path.join(RESULTS, 'standard_baselines_summary.csv')
+    if not os.path.exists(path):
+        print('SKIP: standard_baselines_summary.csv not found (run src/run_standard_baselines.py)')
+        return
+    bs = pd.read_csv(path)
+    order = ['GCN', 'GraphSAGE', 'GAT', 'RandomPartition']
+    colors = {'GCN': '#5b9bd5', 'GraphSAGE': '#ed7d31', 'GAT': '#a5a5a5',
+              'RandomPartition': '#c55a11'}
+    x = np.arange(len(DATASETS))
+    w = 0.2
+    fig, ax = plt.subplots(figsize=(11, 4.5))
+    for j, method in enumerate(order):
+        sub = bs[bs['method'] == method].set_index('dataset').reindex(DATASETS)
+        ax.bar(x + (j - 1.5) * w, sub['f1_micro_mean'], w, yerr=sub['f1_micro_std'],
+               label=method, color=colors[method], edgecolor='black', linewidth=0.5,
+               capsize=2, error_kw={'linewidth': 0.8})
+    ax.set_xticks(x)
+    ax.set_xticklabels(DATASETS)
+    ax.set_ylabel('Micro F1')
+    ax.set_title('Standard GNN Baselines and Random-Partition Control (20 seeds)')
+    ax.legend(framealpha=0.9, ncol=2)
+    ax.grid(axis='y', alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(os.path.join(OUTPUT_DIR, 'standard_baselines.png'))
+    plt.close()
+    print('Saved: standard_baselines.png')
+
+
 def copy_ambiguity_plots():
     """Copy the fresh ambiguity plots from results/plots into the paper figures dir."""
     plot_dir = os.path.join(RESULTS, 'plots')
@@ -321,6 +396,8 @@ def main():
     fig_overlap_efficiency()
     fig_significance_heatmap(df)
     fig_gain_vs_variance(df)
+    fig_runtime()
+    fig_standard_baselines()
     copy_ambiguity_plots()
     print('\nAll plots generated successfully!')
 
