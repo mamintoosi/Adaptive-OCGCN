@@ -156,13 +156,12 @@ The `src/` modules must be importable; run scripts from the repository root or a
 ## Citation
 
 ```bibtex
-@article{amintoosi2022overlapping,
-  title={Overlapping Clusters in Cluster Convolutional Networks},
-  author={Amintoosi, Mahmood},
-  journal={Journal of Applied Analysis and Computation},
-  volume={12},
-  number={3},
-  pages={1173--1189},
-  year={2022}
-}
+@article{Amintoosi2021overlapping,
+author = {Mahmood Amintoosi},
+title = {Overlapping clusters in cluster graph convolutional networks},
+journal = {Journal of Algorithms and Computation},
+volume = {53},
+number = {2},
+pages = {33--45},
+year = {2021}
 ```
