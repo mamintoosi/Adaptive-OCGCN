@@ -504,8 +504,8 @@ The adaptive threshold is defined as:
 
 \begin{equation}
   \mathrm{WMC}_i =
-  \mathrm{WMC}_{\mathrm{base}}
-  \left(1-\lambda a_i\right),
+  \max\left(0.01,\ \mathrm{WMC}_{\mathrm{base}}
+  \left(1-\lambda a_i\right)\right),
   \label{eq:adaptive}
 \end{equation}
 
@@ -514,6 +514,7 @@ where $\mathrm{WMC}_{\mathrm{base}}$ is the reference threshold inherited from t
 When $\lambda=0$, the proposed method reduces to the original OCGCN with a fixed global threshold.
 Increasing $\lambda$ allows ambiguous nodes to receive lower thresholds and consequently participate in additional cluster subgraphs.
 To avoid excessive overlap, $\mathrm{WMC}_i$ is bounded below by 0.01.
+The same lower bound applies to all adaptive variants introduced below.
 
 Using the adaptive threshold, node $i$ is assigned to cluster $c$ if:
 
@@ -542,8 +543,8 @@ which results in:
 
 \begin{equation}
 \mathrm{WMC}_i =
-\mathrm{WMC}_{\mathrm{base}}
-(1-\lambda H_{\mathrm{norm}}(i)).
+\max\left(0.01,\ \mathrm{WMC}_{\mathrm{base}}
+(1-\lambda H_{\mathrm{norm}}(i))\right).
 \label{eq:entropy-adaptive}
 \end{equation}
 
@@ -574,8 +575,8 @@ leading to:
 
 \begin{equation}
 \mathrm{WMC}_i =
-\mathrm{WMC}_{\mathrm{base}}
-(1-\lambda A(i)).
+\max\left(0.01,\ \mathrm{WMC}_{\mathrm{base}}
+(1-\lambda A(i))\right).
 \label{eq:margin-adaptive}
 \end{equation}
 
@@ -596,7 +597,7 @@ This makes it particularly suitable for graphs where overlapping behavior mainly
 Hybrid-Adaptive WMC combines the entropy and margin ambiguity signals into a single score:
 
 \begin{equation}
-a_i = \frac{H_{\mathrm{norm}}(i) + A(i)}{2},
+a_i = \max\left(H_{\mathrm{norm}}(i),\ A(i)\right),
 \label{eq:hybrid-score}
 \end{equation}
 
@@ -604,12 +605,12 @@ leading to:
 
 \begin{equation}
 \mathrm{WMC}_i =
-\mathrm{WMC}_{\mathrm{base}}
-\left(1-\lambda \cdot \frac{H_{\mathrm{norm}}(i) + A(i)}{2}\right).
+\max\left(0.01,\ \mathrm{WMC}_{\mathrm{base}}
+\left(1-\lambda \cdot \max\left(H_{\mathrm{norm}}(i),\ A(i)\right)\right)\right).
 \label{eq:hybrid-adaptive}
 \end{equation}
 
-By averaging the two normalized ambiguity scores, the hybrid exploits both global distribution spread and top-two competition, stays in $[0,1]$, and remains comparable across datasets.
+By taking the maximum of the two complementary ambiguity scores, the hybrid reacts to whichever signal---global distribution spread or top-two competition---is dominant for each node, stays in $[0,1]$, and remains comparable across datasets.
 
 \subsection{Comparison of Adaptive Methods}
 \label{subsec:comparison}
@@ -626,7 +627,7 @@ Table~\ref{tab:method-comparison} summarizes the characteristics of the three pr
 \midrule
 Membership information & Full distribution $P(i,:)$ & Top-two memberships & Both signals \\
 Ambiguity captured & Global distribution uncertainty & Dominant community competition & Combined \\
-Per-node computation & $O(K)$ & $O(K \log K)$ & $O(K)$ \\
+Per-node computation & $O(K)$ & $O(K \log K)$ & $O(K \log K)$ \\
 Suitable scenario & Multi-community ambiguity & Binary community boundary & General purpose \\
 \bottomrule
 \end{tabular}
@@ -635,6 +636,33 @@ Suitable scenario & Multi-community ambiguity & Binary community boundary & Gene
 The three strategies capture complementary aspects of membership uncertainty.
 Entropy is more appropriate when uncertainty is distributed across several communities, margin ambiguity is more targeted toward nodes located between two dominant communities, and the hybrid combines both signals.
 In our experiments the hybrid provides a robust general-purpose configuration, achieving the best result on DBLP.
+Algorithm~\ref{alg:adaptive} summarizes the complete adaptive overlap assignment procedure.
+
+\subsection{Algorithm Summary}
+\label{subsec:algorithm-summary}
+
+\begin{algorithm}[ht]
+\caption{Adaptive Overlap Assignment}
+\label{alg:adaptive}
+\begin{algorithmic}[1]
+\Require{Soft membership matrix $P \in \mathbb{R}^{N \times K}$, base threshold $\mathrm{WMC}_{\mathrm{base}}$, adaptation strength $\lambda \in [0,1]$, ambiguity type $\tau \in \{\text{Entropy}, \text{Margin}, \text{Hybrid}\}$}
+\Ensure{Adaptive cluster assignments $\mathcal{C}_i$ for all nodes $i = 1, \ldots, N$}
+\For{$i \leftarrow 1$ \textbf{to} $N$}
+  \If{$\tau = \text{Entropy}$}
+    \State{$a_i \leftarrow H_{\mathrm{norm}}(i)$ \Comment{Using Eq.~\eqref{eq:entropy}}}
+  \ElsIf{$\tau = \text{Margin}$}
+    \State{$a_i \leftarrow 1 - (p_1 - p_2)$ \Comment{Using Eq.~\eqref{eq:ambiguity}}}
+  \Else
+    \State{$a_i \leftarrow \max\left(H_{\mathrm{norm}}(i),\ A(i)\right)$ \Comment{Using Eq.~\eqref{eq:hybrid-score}}}
+  \EndIf
+  \State{$\mathrm{WMC}_i \leftarrow \max\left(0.01,\ \mathrm{WMC}_{\mathrm{base}} \times (1 - \lambda a_i)\right)$}
+  \State{$p_{\max} \leftarrow \max_{c'} P(i, c')$}
+  \State{$\mathcal{C}_i \leftarrow \{c \mid P(i, c) \geq \mathrm{WMC}_i \times p_{\max}\}$}
+\EndFor
+\State{\Return $\{\mathcal{C}_i\}_{i=1}^{N}$}
+\end{algorithmic}
+\end{algorithm}
+
 %%======================================================================
 \section{Experimental Setup}
 \label{sec:setup}
@@ -1179,6 +1207,10 @@ Without adaptive methods, practitioners must search over WMC values---a costly p
 Margin-Adaptive (or the Hybrid) with $\lambda = 0.50$ achieves competitive performance across all six datasets without per-dataset tuning, and is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
 Importantly, this is not a claim of universal superiority over well-tuned baselines, but rather a demonstration that a single universal configuration ($\mathrm{WMC}_{\mathrm{base}} = 0.3$, $\lambda = 0.5$) performs comparably to per-dataset tuned WMC, eliminating the need for grid search.
 This is particularly valuable in scenarios where practitioners work with many graphs or where the optimal WMC is not known a priori.
+Furthermore, while $\lambda$ is technically a hyperparameter, it acts as a global robustness knob rather than a dataset-specific threshold.
+As shown in the ablation study (Tables~\ref{tab:entropy-lambda},~\ref{tab:margin-lambda}, and~\ref{tab:hybrid-lambda}), setting $\lambda = 0.50$ consistently yields near-optimal or optimal results across all six diverse datasets without any per-dataset tuning.
+This contrasts sharply with the fixed WMC baseline, where the optimal value varies drastically across datasets (e.g., 0.10 for DBLP/IMDB vs.~0.30 for Cora/CiteSeer).
+The sensitivity to $\lambda$ is substantially lower than the sensitivity to WMC, thus practically eliminating the need for a grid search.
 
 \subsection{Performance Gains Are Modest but Real}
 
@@ -1194,6 +1226,13 @@ On datasets where ambiguity is primarily a top-two competition, Margin-Adaptive 
 On datasets with richer multi-cluster ambiguity (PubMed, IMDB), stronger adaptation ($\lambda = 0.75$) helps all variants.
 The weak correlation between entropy and ambiguity on DBLP and CiteSeer ($r \approx -0.4$) confirms that these measures capture genuinely different aspects of the membership distribution.
 The Hybrid variant combines both signals and achieves the best overall result on DBLP, confirming their complementarity.
+
+\subsection{Community-Detection Agnosticism}
+\label{subsec:agnosticism}
+
+While DANMF was utilized in this study to generate the soft membership matrix $P$, the proposed adaptive thresholding mechanism is fundamentally agnostic to the underlying community detection algorithm.
+As long as the chosen clustering method outputs a normalized membership matrix $P \in \mathbb{R}^{N \times K}$ whose rows sum to one, the adaptive WMC formulas (Entropy, Margin, and Hybrid) can be applied directly without any modification.
+This makes Adaptive-OCGCN a general-purpose plugin that can improve partition-based GNN training pipelines utilizing various soft clustering techniques.
 
 \subsection{Practical Recommendations}
 
@@ -1213,8 +1252,12 @@ Based on our findings, we recommend:
 
 \paragraph{Dataset scope.}
 We evaluate on six datasets, all of moderate size (2,363--19,717 nodes).
-The largest graph, PubMed, has 19,717 nodes, which is small by modern standards.
-Scaling to larger graphs (e.g., OGB benchmarks with millions of nodes) would strengthen the claims and test whether the ambiguity signal remains informative at scale.
+The largest graph, PubMed, has 19,717 nodes, which is relatively small by modern GNN standards, even though the paper title emphasizes scalable GNNs.
+It is crucial, however, to distinguish between the scalability of the proposed adaptive thresholding mechanism and the scalability of the upstream clustering algorithm.
+The adaptive WMC framework itself is theoretically highly scalable: the node-level ambiguity scores add only $O(NK)$ or $O(NK \log K)$ computational overhead, which is negligible compared with GCN training.
+The current evaluation is limited to standard benchmark sizes because the upstream dependency---specifically the DANMF clustering algorithm used to generate $P$---becomes a computational bottleneck on graphs with millions of nodes.
+Therefore, the proposed method is fully prepared for large-scale graphs, provided it is paired with a more scalable soft community detection algorithm in future work.
+Scaling to larger graphs (e.g., OGB benchmarks with millions of nodes) would further strengthen the claims and test whether the ambiguity signal remains informative at scale.
 
 \paragraph{Community detection method.}
 All experiments use DANMF for membership estimation.

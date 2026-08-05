@@ -61,14 +61,13 @@ Adaptive-OCGCN/
 │   ├── run_ablation.py              # Ablation study runner (λ sensitivity)
 │   ├── run_ambiguity_analysis.py    # Ambiguity analysis
 │   ├── run_full_ambiguity_analysis.py
-│   ├── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison + stats
-│   └── run_mag_evaluation.py        # OGBN-MAG evaluation
+│   └── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison + stats
 ├── results/                         # Experimental results
 │   ├── plots/                       # Generated figures
 │   └── *.csv                        # Raw and summary results
 ├── adaptive-ocgcn-latex/            # Paper manuscript
-│   ├── adaptive_ocgcn.tex           # LaTeX source
-│   ├── adaptive_ocgcn.pdf           # Compiled PDF
+│   ├── sn-article.tex               # LaTeX source (Springer Nature template)
+│   ├── elsarticle/                  # Archived Elsevier (elsarticle) version
 │   ├── figures/                     # Paper figures (13 PNGs)
 │   └── generate_plots.py            # Figure generation script
 ├── docs/
@@ -133,14 +132,14 @@ python src/run_full_ambiguity_analysis.py
 
 ```bash
 cd adaptive-ocgcn-latex
-pdflatex adaptive_ocgcn.tex
+pdflatex sn-article.tex
 ```
 
 ## Key Results
 
 - Adaptive thresholding eliminates the WMC hyperparameter while maintaining competitive performance
-- Entropy-Adaptive (and Hybrid-Adaptive) with lambda=0.50 are reasonable defaults across all datasets
-- High-entropy nodes are 69-95% overlap candidates vs 0-17% for low-entropy nodes
+- Margin-Adaptive (and Hybrid-Adaptive) with lambda=0.50 are reasonable defaults across all datasets
+- High-entropy nodes are 41-95% overlap candidates vs 0-17% for low-entropy nodes
 - At matched overlap ratios, adaptive methods win on most datasets
 - Fully seeded runs (torch/numpy/python/DANMF) + cached DANMF per (dataset, seed) give a clean paired design
 - Both micro and macro F1 are reported

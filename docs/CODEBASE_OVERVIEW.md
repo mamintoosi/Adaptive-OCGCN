@@ -26,8 +26,7 @@ Adaptive-OCGCN/
 │   ├── run_ablation.py          # λ sensitivity for entropy/margin/hybrid
 │   ├── run_fixed_wmc_comparison.py  # Fixed-WMC sweep + fair comparison + stats
 │   ├── run_ambiguity_analysis.py
-│   ├── run_full_ambiguity_analysis.py
-│   └── run_mag_evaluation.py    # OGBN-MAG subsample
+│   └── run_full_ambiguity_analysis.py
 ├── results/                     # CSV results + plots/
 ├── adaptive-ocgcn-latex/        # Paper source, figures, plot generator
 ├── docs/                        # This documentation
