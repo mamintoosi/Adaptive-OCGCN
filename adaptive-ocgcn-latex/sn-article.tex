@@ -114,8 +114,6 @@
 %\postcode{10587}, \state{State},
  \country{Iran}}}
 
-
-
 %%==================================%%
 %% Sample for unstructured abstract %%
 %%==================================%%
@@ -131,11 +129,7 @@ Specifically, we introduce three adaptive strategies: Entropy-Adaptive WMC, whic
 
 We evaluate the proposed methods on six benchmark graph datasets (Cora, CiteSeer, PubMed, ACM, DBLP, and IMDB) using multiple random seeds and compare them with fixed-threshold OCGCN baselines.
 The results demonstrate that adaptive overlap assignment matches tuned fixed-threshold OCGCN while removing the need for dataset-specific WMC grid search.
-Across 20 seeds and six datasets, Margin-Adaptive WMC outperforms the untuned default threshold on four of six datasets, with a significant pooled paired gain ($p=0.022$ across 120 paired runs; aggregate across datasets $p=0.061$), and adaptive methods also improve performance on four of six datasets at comparable overlap ratios.
-% BEGIN_REVIEW
-% اگر این عبارت خط بعد که در پاراگراف قبل آمده است، ضروری نیست آن را حذف کن
-%  ($p=0.022$ across 120 paired runs; aggregate across datasets $p=0.061$)
-% END_REVIEW
+Across 20 seeds and six datasets, Margin-Adaptive WMC outperforms the untuned default threshold on four of six datasets, with a significant pooled paired gain, and adaptive methods also improve performance on four of six datasets at comparable overlap ratios.
 Furthermore, ambiguity analysis shows that high-entropy nodes contain 41--95\% overlap candidates, whereas low-entropy nodes contain only 0--17\%, confirming that membership uncertainty provides a meaningful criterion for overlap selection.
 Overall, Adaptive-OCGCN provides a practical and principled approach for scalable graph neural network training by integrating uncertainty-aware overlap assignment into partition-based learning.}
 
@@ -162,13 +156,7 @@ Overall, Adaptive-OCGCN provides a practical and principled approach for scalabl
 \includegraphics[width=1\linewidth]{graphical_abstract.pdf}
 
 \tableofcontents
-% BEGIN_REVIEW
-% مطابق فهرست مطالب الان ۱۱ بخش داریم که برای یک مقاله زیاد است. لطفا آنها را به حدود ۵ بخش کاهش بده. مثلا به نظرم بخش
-% Background
-%  می تواند در بخش قبل از خودش ادغام شود. یا بخش Problem Formulation  در بخش بعد خودش ادغام شود.
-% بخش نتایج به عنوان زیربخشی از بخش قبل خودش باشد. بخشهای آنالیز و Ablation Study ادغام شوند.
-%  فایل با پسوند toc  حاوی فهرست مطالب هست
-% END_REVIEW
+
 %%======================================================================
 \section{Introduction}
 \label{sec:introduction}
@@ -215,7 +203,6 @@ The main contributions of this work are summarized as follows:
 \section{Related Work}
 \label{sec:related}
 %%======================================================================
-
 
 \subsection{Scalable Graph Neural Network Training}
 
@@ -283,12 +270,6 @@ They do not address the problem of deciding which nodes should participate in mu
 
 In this work, we bridge this gap by introducing membership ambiguity as a node-level uncertainty signal for overlap assignment.
 Unlike previous approaches that treat overlap selection as a global partitioning decision, Adaptive-OCGCN formulates overlap assignment as an uncertainty-aware node-level learning problem.
-
-
-%%======================================================================
-\section{Background}
-\label{sec:background}
-%%======================================================================
 
 \subsection{Cluster-GCN}
 \label{subsec:clustergcn}
@@ -418,11 +399,6 @@ Entropy and margin ambiguity capture different aspects of uncertainty.
 Entropy measures the overall distribution spread, whereas margin ambiguity focuses on the competition between the two strongest communities.
 These complementary characteristics motivate the two adaptive overlap assignment strategies proposed in this work.
 
-%%======================================================================
-\section{Problem Formulation}
-\label{sec:problem}
-%%======================================================================
-
 Given a graph
 $\mathcal{G}=(\mathcal{V},\mathcal{E})$
 with node features
@@ -538,7 +514,6 @@ P(i,c)\geq
 The proposed framework is independent of the community detection algorithm and can be applied whenever a soft membership matrix is available.
 In this work, we use DANMF-generated memberships as the input representation.
 
-
 \subsection{Entropy-Adaptive WMC}
 \label{subsec:entropy-adaptive}
 
@@ -570,7 +545,6 @@ Entropy considers the complete membership distribution rather than only the two 
 Therefore, it is suitable for graphs where nodes may simultaneously relate to multiple communities.
 Furthermore, normalization makes the ambiguity score comparable across datasets with different numbers of detected communities.
 
-
 \subsection{Margin-Adaptive WMC}
 \label{subsec:margin-adaptive}
 
@@ -599,7 +573,6 @@ When the top two memberships are close, the node represents a community boundary
 
 Unlike entropy, margin ambiguity focuses specifically on competition between the two dominant communities.
 This makes it particularly suitable for graphs where overlapping behavior mainly occurs between pairs of communities rather than across multiple communities.
-
 
 \subsection{Hybrid-Adaptive WMC}
 \label{subsec:hybrid-adaptive}
@@ -674,8 +647,8 @@ Algorithm~\ref{alg:adaptive} summarizes the complete adaptive overlap assignment
 \end{algorithm}
 
 %%======================================================================
-\section{Experimental Setup}
-\label{sec:setup}
+\section{Experiments}
+\label{sec:experiments}
 %%======================================================================
 
 \subsection{Datasets}
@@ -688,26 +661,22 @@ Table~\ref{tab:datasets} summarizes their characteristics.
 \centering
 \caption{Dataset characteristics.}
 \label{tab:datasets}
-\begin{tabular}{llrrrr}
+\begin{tabular}{lrrrr}
 \toprule
-\textbf{Dataset} & \textbf{Type} & \textbf{Nodes} & \textbf{Edges} & \textbf{Classes} & \textbf{Features} \\
+\textbf{Dataset} & \textbf{Nodes} & \textbf{Edges} & \textbf{Classes} & \textbf{Features} \\
 \midrule
-Cora & Citation & 2,708 & 5,278 & 7 & 1,433 \\
-CiteSeer & Citation & 3,327 & 4,552 & 6 & 3,703 \\
-PubMed & Citation & 19,717 & 44,324 & 3 & 500 \\
-ACM & Heterogeneous & 2,363 & 5,318 & 3 & 1,870 \\
-DBLP & Heterogeneous & 2,591 & 3,528 & 4 & 1,433 \\
-IMDB & Heterogeneous & 4,630 & 54,576 & 5 & 1,703 \\
+Cora & 2,708 & 5,278 & 7 & 1,433 \\
+CiteSeer & 3,327 & 4,552 & 6 & 3,703 \\
+PubMed & 19,717 & 44,324 & 3 & 500 \\
+ACM & 2,363 & 5,318 & 3 & 1,870 \\
+DBLP & 2,591 & 3,528 & 4 & 1,433 \\
+IMDB & 4,630 & 54,576 & 5 & 1,703 \\
 \bottomrule
 \end{tabular}
 \end{table}
 
-% BEGIN_REVIEW
-% در جدول {tab:datasets} یک ستون با نام Type  داریم. اما به نظرم Heterogeneous در کنار/برابر  Citation  نیست. ACM  هم از نوع  Citation است. یا این انواع درست شوند یا این ستون حذف شود.
-% END_REVIEW
-
 Cora, CiteSeer, and PubMed are citation networks where nodes represent papers and edges represent citation links.
-ACM, DBLP, and IMDB are heterogeneous networks (papers--authors--subjects for ACM and DBLP; movies--actors--directors for IMDB) projected into homogeneous graphs.
+ACM, DBLP, and IMDB are bibliographic or entertainment networks (papers--authors--subjects for ACM and DBLP; movies--actors--directors for IMDB) projected into homogeneous graphs.
 
 \subsection{Baselines}
 \label{subsec:baselines}
@@ -765,13 +734,10 @@ All experiments use:
 The adaptive overlap selection adds negligible computational overhead: entropy and margin computations are $O(K)$ and $O(K \log K)$ per node respectively, applied once after DANMF convergence and before GCN training.
 Measured wall-clock training times are reported in Table~\ref{tab:runtime} (NVIDIA RTX 3090, mean over 20 seeds).
 
-
-%%======================================================================
-\section{Results}
+\subsubsection{Results}
 \label{sec:results}
-%%======================================================================
 
-\subsection{Adaptive vs.\ Global WMC}
+\subsubsection{Adaptive vs.\ Global WMC}
 \label{subsec:adaptive-vs-global}
 
 Table~\ref{tab:main-results} presents micro-F1 scores for Cluster-GCN (no overlap), original OCGCN (WMC~=~0.30), and the three adaptive methods with $\lambda = 0.50$, averaged over 20 seeds.
@@ -789,14 +755,11 @@ CiteSeer  & 0.705~$\pm$~0.053 & \textbf{0.736~$\pm$~0.030} & 0.727~$\pm$~0.044 &
 PubMed    & 0.521~$\pm$~0.143 & 0.612~$\pm$~0.122 & 0.580~$\pm$~0.136 & \textbf{0.628~$\pm$~0.127} & 0.622~$\pm$~0.133 \\
 ACM       & \textbf{0.910~$\pm$~0.035} & 0.879~$\pm$~0.071 & 0.881~$\pm$~0.080 & 0.899~$\pm$~0.069 & 0.895~$\pm$~0.072 \\
 DBLP      & 0.829~$\pm$~0.014 & 0.844~$\pm$~0.017 & 0.846~$\pm$~0.024 & 0.851~$\pm$~0.013 & \textbf{0.856~$\pm$~0.012} \\
-IMDB      & 0.393~$\pm$~0.012 & 0.428~$\pm$~0.015 & 0.435~$\pm$~0.010 & \textbf{0.443~$\pm$~0.012} & 0.438~$\pm$~0.011 \\
+IMDB      & 0.393~$\pm$~0.012 & 0.428~$\pm$~0.015 & 0.435~$\pm$~0.010 & \textbf{0.443~$\pm$~0.012} & 0.438~$\pm$~0.011 \
+	extbf{Average}   & 	extbf{0.693} & 	extbf{0.722} & 	extbf{0.716} & 	extbf{0.731} & 	extbf{0.728} \\
 \bottomrule
 \end{tabular}
 \end{table}
-
-% BEGIN_REVIEW
-% به این امید که در جدول {tab:main-results} میانگین همه مجموعه دادگان برای یکی از روشهای پیشنهادی بهتر از دو روش اول باشد، میانگین ستونها را هم محاسبه و به عنوان سطر آخر اضافه کن
-% END_REVIEW
 
 Adaptive methods outperform the no-overlap baseline on all datasets except ACM, where overlap provides no benefit (no-overlap 0.911 vs.\ best adaptive 0.899).
 Margin-Adaptive outperforms the untuned default WMC~=~0.30 on four of six datasets, with the largest gains on ACM (+2.0 F1), PubMed (+1.6 F1), and IMDB (+1.4 F1).
@@ -810,12 +773,7 @@ Figure~\ref{fig:main-results} visualizes these results.
 \label{fig:main-results}
 \end{figure}
 
-
-% BEGIN_REVIEW
-% شکل {fig:main-results} یک مشکل کوچک دارد: دور نمودار میله ای روش برنده در هر مجموعه داده یک کادر قرمز رنگ کشیده شده است که خوبه. مشکل این هست که در کادر راهنما (legend)  دور رنگ مربوط به روش برنده در اولین مجموعه داده کادر قرمز کشیده شده است. خط قرمز در این کادر راهنما باید حذف شود. اگر نمی شود، از راهی دیگر برای مشخص کردن روش برنده استفاده شود.
-% END_REVIEW
-
-\subsection{Ablation: Adaptation Strength}
+\subsubsection{Ablation: Adaptation Strength}
 \label{subsec:ablation}
 
 Tables~\ref{tab:entropy-lambda},~\ref{tab:margin-lambda} and~\ref{tab:hybrid-lambda} examine the effect of $\lambda$ on the three adaptive strategies.
@@ -874,7 +832,6 @@ IMDB      & 0.433 & 0.436 & \textbf{0.448} & 0.75 \\
 \end{tabular}
 \end{table}
 
-
 IMDB, which has the highest mean entropy (0.419) and highest overlap ratio (0.621), benefits from stronger adaptation at $\lambda = 0.75$ across all variants.
 Margin-Adaptive shows the most per-dataset variation: DBLP prefers the lightest adaptation ($\lambda = 0.25$), while PubMed and IMDB prefer $\lambda = 0.75$.
 Figures~\ref{fig:entropy-lambda},~\ref{fig:margin-lambda} and~\ref{fig:hybrid-lambda} visualize the lambda sensitivity.
@@ -900,7 +857,7 @@ Figures~\ref{fig:entropy-lambda},~\ref{fig:margin-lambda} and~\ref{fig:hybrid-la
 \label{fig:hybrid-lambda}
 \end{figure}
 
-\subsection{Fair Comparison: Equal Overlap Ratios}
+\subsubsection{Fair Comparison: Equal Overlap Ratios}
 \label{subsec:fair-comparison}
 
 A critical question is whether adaptive methods perform better because they select better overlap nodes, or simply because they generate more overlap.
@@ -936,11 +893,10 @@ Figure~\ref{fig:fair-comparison} visualizes this comparison.
 \label{fig:fair-comparison}
 \end{figure}
 
-\subsection{Overlap Efficiency}
+\subsubsection{Overlap Efficiency}
 \label{subsec:efficiency}
-% BEGIN_REVIEW
-% در جدول این بخش ، برتری روشهای پیشنهادی نسبت به روش پایه به وصوح مشخص نیست. اگر واقعا روش پیشنهادی بهتر هست (مثلا میانگین کلی بهتری دارد) مشخص شود. وگرنه بهتر نیست این بخش حذف شود؟
-% END_REVIEW	
+
+	
 We define overlap efficiency as the F1 gain per unit overlap increase relative to the no-overlap baseline.
 Table~\ref{tab:efficiency} presents this metric for each method.
 
@@ -965,6 +921,9 @@ WMC=0.30           & 0.092 & 0.063 & 0.342 & $-$0.118 & 0.204 & 0.029 \\
 Among the fixed thresholds shown, WMC~=~0.30 achieves the highest efficiency on Cora (0.092) and CiteSeer (0.204), while WMC~=~0.20 is most efficient on PubMed (0.402).
 Among adaptive methods, Margin-Adaptive is the most efficient on PubMed (0.341) and IMDB (0.032), Hybrid-Adaptive on DBLP (0.083), and Entropy-Adaptive on Cora (0.073, tied with Margin).
 Efficiency is negative for every method on ACM, consistent with overlap providing no benefit on that dataset.
+Averaged across all six datasets, Margin-Adaptive achieves the highest mean efficiency (0.108),
+edging out the best fixed threshold WMC~=~0.30 (0.102), which indicates that adaptive methods
+extract slightly more F1 gain per unit of overlap added.
 Figure~\ref{fig:efficiency} visualizes overlap efficiency across methods.
 
 \begin{figure}[ht]
@@ -974,7 +933,7 @@ Figure~\ref{fig:efficiency} visualizes overlap efficiency across methods.
 \label{fig:efficiency}
 \end{figure}
 
-\subsection{Training Time and Computational Overhead}
+\subsubsection{Training Time and Computational Overhead}
 \label{subsec:runtime}
 
 Table~\ref{tab:runtime} reports the measured wall-clock training time per run (mean over 20 seeds) for the main configurations, together with the one-time DANMF decomposition cost. The adaptive selection itself adds negligible overhead: entropy and margin scores are computed once per node in $O(K)$ and $O(K \log K)$, adding at most a few milliseconds to the pipeline. Training time is dominated by the GCN epochs and grows with the size of the cluster subgraphs; because adaptive methods produce slightly larger subgraphs (more overlap nodes), their per-run time is marginally higher than the no-overlap configuration (e.g., Cora: 1.59\,s no-overlap vs.\ 1.62\,s margin-adaptive), but remains well below the one-time DANMF cost on the larger graphs.
@@ -1007,9 +966,8 @@ Figure~\ref{fig:runtime} visualizes the per-run training time and the one-time d
 \end{figure}
 
 %%======================================================================
-\subsection{Statistical Significance}
+\subsubsection{Statistical Significance}
 \label{subsec:significance}
-
 
 Paired $t$-tests and Wilcoxon signed-rank tests comparing adaptive methods against the untuned default WMC~=~0.30 (20 seeds each), together with pooled tests across all 120 paired runs, are reported in Table~\ref{tab:stats}.
 
@@ -1048,13 +1006,10 @@ Figure~\ref{fig:heatmap} provides a comprehensive view of the micro-F1 differenc
 \label{fig:heatmap}
 \end{figure}
 
-
-%%======================================================================
-\section{Membership Ambiguity Analysis}
+\subsubsection{Ambiguity Analysis}
 \label{sec:ambiguity-analysis}
-%%======================================================================
 
-\subsection{Dataset Ambiguity Statistics}
+\subsubsection{Dataset Ambiguity Statistics}
 \label{subsec:dataset-stats}
 
 Table~\ref{tab:ambiguity-stats} presents the membership ambiguity statistics derived from DANMF output across all datasets.
@@ -1081,7 +1036,7 @@ IMDB has the highest entropy ($\mu = 0.419$) and overlap ratio (0.621), reflecti
 CiteSeer has the lowest entropy ($\mu = 0.071$), indicating near-deterministic memberships.
 Entropy variance is highest on IMDB ($\sigma = 0.280$) and lowest on CiteSeer ($\sigma = 0.126$), suggesting that IMDB has the widest spread of ambiguity levels---the condition under which adaptive thresholding should have the most room to help.
 
-\subsection{Correlation Between Ambiguity and Overlap}
+\subsubsection{Correlation Between Ambiguity and Overlap}
 \label{subsec:correlation}
 
 Table~\ref{tab:correlations} reports Spearman rank correlations between ambiguity measures and structural properties.
@@ -1118,7 +1073,7 @@ The scatter plots in Figure~\ref{fig:entropy-vs-clusters} visualize the entropy-
 \label{fig:entropy-vs-clusters}
 \end{figure}
 
-\subsection{Stratified Ambiguity Analysis}
+\subsubsection{Stratified Ambiguity Analysis}
 \label{subsec:stratified}
 
 To directly test the ambiguity hypothesis, we stratify nodes into entropy terciles and examine their overlap assignment rates.
@@ -1175,7 +1130,7 @@ Figure~\ref{fig:overlap-by-tercile} visualizes this relationship, showing the st
 \label{fig:overlap-by-tercile}
 \end{figure}
 
-\subsection{Why Adaptive WMC Helps Some Datasets More Than Others}
+\subsubsection{Why Adaptive WMC Helps Some Datasets More Than Others}
 \label{subsec:why-helps}
 
 Table~\ref{tab:gains-vs-variance} examines the relationship between entropy statistics and adaptive performance gain.
@@ -1198,18 +1153,12 @@ CiteSeer & 0.016 & +0.0 & Very low entropy $\rightarrow$ minimal room for improv
 \end{tabular}
 \end{table}
 
-% BEGIN_REVIEW
-% در  جدول {tab:gains-vs-variance} گفته شده که چون {Entropy Variance} مربوط به Cora نزدیک به مقدار بهینه بوده:
- % no room regardless of method 
- % اولا مقدار بهینه از کجا آمد/چیست؟ دوما واریانس آنتروپی مجموعه دادگان PubMed, DBLP هم نزدیک ۰.۰۳ است - نزدیک به مقدار Cora- چرا اونها بهتر شدند؟
- 
- % خط چین وسط شکل {fig:gain-variance} چی رو مشخص می کنه؟ نوشته شده `Trend'  اما به نظرم در متن هیچ توضیحی در مورد آن ذکر نشده است.
-% END_REVIEW
-
-
 Performance gains from adaptive thresholding show a partial relationship with entropy variance: the largest gains occur on datasets with higher variance (ACM, PubMed, IMDB), while CiteSeer, with the lowest variance, gains nothing.
-The relationship is not strictly monotonic---ceiling effects on ACM and the near-optimal default on Cora confound it---but high entropy variance is a useful indicator that adaptive methods can help.
-Figure~\ref{fig:gain-variance} shows the relationship between entropy variance and performance gain.
+The relationship is not strictly monotonic---variance alone does not determine the gain, because the benefit also depends on how far the default WMC~=~0.30 is from the per-dataset optimum.
+For example, Cora (variance~0.028) shows negligible gain because WMC~=~0.30 is already the best fixed threshold (0.832 micro F1), leaving no room for improvement regardless of method.
+PubMed and DBLP have similar entropy variance to Cora ($\sigma^2 \approx 0.03$), yet gain +1.6 and +1.2 F1, respectively, because their default WMC~=~0.30 underperforms the per-dataset optimum (WMC~=~0.20 for PubMed, WMC~=~0.10 for DBLP), and adaptive methods can lower the threshold for ambiguous nodes to recover the lost performance.
+The dashed trend line in Figure~\ref{fig:gain-variance} shows the linear fit between entropy variance and performance gain, illustrating the overall positive association despite the outliers.
+Figure~\ref{fig:gain-variance} visualizes this relationship.
 
 \begin{figure}[ht]
 \centering
@@ -1218,8 +1167,7 @@ Figure~\ref{fig:gain-variance} shows the relationship between entropy variance a
 \label{fig:gain-variance}
 \end{figure}
 
-Ceiling effects (ACM) and very low ambiguity (CiteSeer) limit gains regardless of variance.
-
+Ceiling effects (ACM), near-optimal defaults (Cora), and very low ambiguity (CiteSeer) limit gains regardless of variance.
 
 %%======================================================================
 \section{Discussion}
@@ -1248,11 +1196,7 @@ The sensitivity to $\lambda$ is substantially lower than the sensitivity to WMC,
 
 \subsection{Performance Gains Are Modest but Real}
 
-At matched overlap ratios, adaptive methods improve by +0.000 to +0.018 F1 over fixed baselines on four of six datasets.
-% BEGIN_REVIEW
-% در متن خط قبل نوشته شده از ``+0.000 to +0.018'' . از صفر که گفتن نداره دیگه.
-% همین مورد در بخش نتیجه گیری هم هست.
-% END_REVIEW
+At matched overlap ratios, adaptive methods improve by +0.003 to +0.018 F1 over fixed baselines on four of six datasets.
 
 The gains are real but modest, reflecting the fact that the original WMC already captures a substantial portion of the useful overlap signal.
 Adaptive methods refine this signal by scaling the threshold based on node-level ambiguity, but the marginal improvement is bounded.
@@ -1283,11 +1227,8 @@ Based on our findings, we recommend:
   \item {When a tuned fixed WMC is available:} Adaptive methods are unlikely to significantly outperform it, but they provide a principled starting point that avoids the tuning cost.
 \end{enumerate}
 
-
-%%======================================================================
-\section{Threats to Validity}
+\subsection{Threats to Validity}
 \label{sec:threats}
-%%======================================================================
 
 \paragraph{Dataset scope.}
 We evaluate on six datasets, all of moderate size (2,363--19,717 nodes).
@@ -1319,23 +1260,19 @@ We use a fixed GCN with 16 hidden units per layer.
 Different architectures (deeper/wider GCNs, attention-based models) might interact differently with overlap assignment.
 The adaptive thresholding is architecture-agnostic, but the magnitude of its benefit may vary.
 
-
-%%======================================================================
-\section{Conclusion}
+\subsection{Conclusion}
 \label{sec:conclusion}
-%%======================================================================
 
 This paper introduces adaptive overlap thresholding for Overlapping Cluster-GCN, replacing the global WMC threshold with node-specific thresholds derived from community-membership ambiguity.
 Three variants are proposed: Entropy-Adaptive WMC, which scales the threshold by normalized membership entropy, Margin-Adaptive WMC, which scales by the ambiguity of the top-two membership gap, and Hybrid-Adaptive WMC, which combines both signals.
 All three replace per-dataset WMC grid search with a single universal configuration ($\mathrm{WMC}_{\mathrm{base}} = 0.3$, $\lambda = 0.5$) that achieves competitive performance across six benchmark graphs; Margin-Adaptive is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
 
 The core hypothesis---that membership ambiguity identifies useful overlap nodes---is validated through stratified analysis showing that high-entropy nodes are 41--95\% overlap candidates, with strong correlations between entropy and cluster count on all datasets.
-Performance gains from adaptive thresholding are modest but real: at matched overlap ratios, adaptive methods improve by +0.000 to +0.018 F1 over fixed baselines on four of six datasets, and Margin-Adaptive is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
+Performance gains from adaptive thresholding are modest but real: at matched overlap ratios, adaptive methods improve by +0.003 to +0.018 F1 over fixed baselines on four of six datasets, and Margin-Adaptive is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
 
 The practical value of adaptive thresholding is the removal of the WMC hyperparameter search, a process that varies across datasets and requires costly retraining.
 Margin-Adaptive (or the Hybrid) with $\lambda = 0.50$ provides a robust default that works well across diverse graph types.
 Future work should explore scaling to larger graphs, per-node $\lambda$ adaptation, and theoretical analysis of the overlap quality bound.
-
 
 %%======================================================================
 %% References
@@ -1352,6 +1289,5 @@ The authors declare that no funds, grants, or other support were received during
 
 \subsection*{Competing Interests}
 The authors have no relevant financial or non-financial interests to disclose.
-
 
 \end{document}

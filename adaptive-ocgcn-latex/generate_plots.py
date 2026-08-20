@@ -77,19 +77,20 @@ def fig_main_results(df):
                       edgecolor='black', linewidth=0.5)
         bars_all.append(bars)
 
-    # Mark the best per dataset (only over the 5 shown methods)
-    for i in range(len(DATASETS)):
-        vals = [get_micro(lab, df, DATASETS[i]) for lab in labels]
-        best_idx = int(np.nanargmax(vals))
-        bars_all[best_idx][i].set_edgecolor('red')
-        bars_all[best_idx][i].set_linewidth(2.0)
-
     ax.set_xlabel('Dataset')
     ax.set_ylabel('Micro F1')
     ax.set_title('Main Results: Micro F1 Across Overlap Selection Strategies (20 seeds)')
     ax.set_xticks(x)
     ax.set_xticklabels(DATASETS)
     ax.legend(loc='lower right', framealpha=0.9)
+
+    # Mark the best per dataset AFTER creating the legend, so the legend
+    # entries keep their black edges while the actual bars get red highlights.
+    for i in range(len(DATASETS)):
+        vals = [get_micro(lab, df, DATASETS[i]) for lab in labels]
+        best_idx = int(np.nanargmax(vals))
+        bars_all[best_idx][i].set_edgecolor('red')
+        bars_all[best_idx][i].set_linewidth(2.0)
     ax.set_ylim(0.35, 1.0)
     ax.grid(axis='y', alpha=0.3)
     plt.tight_layout()
