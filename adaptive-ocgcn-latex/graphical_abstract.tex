@@ -30,7 +30,7 @@
 % ════════════════════════════════════════════════════════════════════
 % PANEL A: Original OCGCN — CRISP
 % ════════════════════════════════════════════════════════════════════
-\node[font=\bfseries\scriptsize, graytext] at (2.0, 5.2) {(a) Global WMC};
+\node[font=\bfseries\scriptsize, graytext] at (2.0, 5.2) {(a) Global Thresholding};
 
 \node[vnode, fill=clusterA!70] (p1) at (0.5, 4.2) {1};
 \node[vnode, fill=clusterA!70] (p2) at (1.5, 4.5) {2};
@@ -62,14 +62,19 @@
 \draw[clusterA, dashed, line width=0.8pt] (1.2, 3.5) ellipse (1.3cm and 1.3cm);
 \draw[clusterB, dashed, line width=0.8pt] (3.1, 3.5) ellipse (0.85cm and 1.1cm);
 
-\node[font=\tiny, graytext, anchor=west] at (4.2, 3.8) {node 5};
-\node[font=\tiny, graytext, anchor=west] at (4.2, 3.5) {assigned to A only};
-\node[font=\tiny, graytext, anchor=west] at (4.2, 3.2) {cross edges lost};
-
 \node[block, fill=gcncolor!10, draw=gcncolor, text width=2.2cm] at (2.0, 1.4) {WMC = 0.30\\[-1pt]{\tiny same for all nodes}};
 
 \draw[arrow] (2.0, 2.0) -- (2.0, 1.85);
 
+\node[font=\small\bfseries, clusterA] at (0.8, 4.9) {A};
+\node[font=\small\bfseries, clusterB] at (3.3, 4.7) {B};
+
+\node[font=\tiny, graytext, anchor=west] at (4, 3.8) {node 5:};
+\node[font=\tiny, graytext, anchor=west] at (4, 3.5) {assigned };
+\node[font=\tiny, graytext, anchor=west] at (4, 3.2) {to A only};
+\node[font=\tiny, graytext, anchor=west] at (4, 2.9) {cross edges lost};
+
+\node[block, fill=gcncolor!10, draw=gcncolor, text width=2.5cm] at (2.0, 1.4) {Fixed Threshold\\[-1pt]{\tiny same for all nodes}};
 % ════════════════════════════════════════════════════════════════════
 % PANEL B: Adaptive — OVERLAP
 % ════════════════════════════════════════════════════════════════════
@@ -104,45 +109,63 @@
 \draw[clusterA, dashed, line width=0.8pt] (6.7, 3.5) ellipse (1.3cm and 1.3cm);
 \draw[clusterB, dashed, line width=0.8pt] (8.6, 3.5) ellipse (0.85cm and 1.1cm);
 
-% Annotation — shifted left to avoid bar chart
-\node[font=\tiny, graytext, anchor=west] at (9.7, 3.8) {node 5:};
-\node[font=\tiny, graytext, anchor=west] at (9.7, 3.5) {high entropy};
-\node[font=\tiny, graytext, anchor=west] at (9.7, 3.2) {$\Rightarrow$ low WMC$_i$};
-\node[font=\tiny, graytext, anchor=west] at (9.7, 2.9) {$\Rightarrow$ joins A \& B};
+%% Annotation — shifted left to avoid bar chart
+%\node[font=\tiny, graytext, anchor=west] at (9.7, 3.8) {node 5:};
+%\node[font=\tiny, graytext, anchor=west] at (9.7, 3.5) {high entropy};
+%\node[font=\tiny, graytext, anchor=west] at (9.7, 3.2) {$\Rightarrow$ low WMC$_i$};
+%\node[font=\tiny, graytext, anchor=west] at (9.7, 2.9) {$\Rightarrow$ joins A \& B};
+%
+%% Threshold boxes — wider left box for 3 lines, moved down
+%\node[block, fill=entropycolor!10, draw=entropycolor, text width=3.0cm] (entbox) at (6.0, 1.0) {Entropy-Adaptive: $\mathrm{WMC}_i = \mathrm{WMC}_b (1{-}\lambda H_i)$};
+%\node[block, fill=adaptivecolor!10, draw=adaptivecolor, text width=3.0cm] (margbox) at (9.2, 1.0) {Margin-Adaptive: $\mathrm{WMC}_i = \mathrm{WMC}_b (1{-}\lambda A_i)$};
+%
+%\node[font=\bfseries\scriptsize, adaptivecolor] at (7.5, 5.2) {(b) Node-Specific Thresholds};
+%
+%% اضافه کردن برچسب خوشه ها
+\node[font=\small\bfseries, clusterA] at (6.3, 4.9) {A};
+\node[font=\small\bfseries, clusterB] at (8.8, 4.7) {B};
 
-% Threshold boxes — wider left box for 3 lines, moved down
-\node[block, fill=entropycolor!10, draw=entropycolor, text width=3.0cm] (entbox) at (6.0, 1.0) {Entropy-Adaptive: $\mathrm{WMC}_i = \mathrm{WMC}_b (1{-}\lambda H_i)$};
-\node[block, fill=adaptivecolor!10, draw=adaptivecolor, text width=3.0cm] (margbox) at (9.2, 1.0) {Margin-Adaptive: $\mathrm{WMC}_i = \mathrm{WMC}_b (1{-}\lambda A_i)$};
+% Annotation 
+\node[font=\tiny, graytext, anchor=west] at (9.5, 3.8) {node 5:};
+\node[font=\tiny, graytext, anchor=west] at (9.5, 3.5) {high ambiguity};
+\node[font=\tiny, graytext, anchor=west] at (9.5, 3.2) {$\Rightarrow$ lower threshold};
+\node[font=\tiny\bfseries, adaptivecolor, anchor=west] at (9.5, 2.9) {$\Rightarrow$ joins A \& B};
 
-\draw[arrow, entropycolor] (6.0, 2.0) -- (6.0, 1.45);
-\draw[arrow, adaptivecolor] (8.8, 2.0) -- (9.2, 1.45);
+\node[block, fill=adaptivecolor!10, draw=adaptivecolor, text width=5.5cm, align=center] (conceptbox) at (7.6, 1.1) {
+  Threshold adapts to node uncertainty:\\ 
+  {\footnotesize High Ambiguity $\rightarrow$ Lower Threshold}\\ 
+  {\footnotesize Low Ambiguity $\rightarrow$ Higher Threshold}
+};
+
+\draw[arrow, adaptivecolor] (7.6, 2.0) -- (7.6, 1.65);
+
+%\draw[arrow, entropycolor] (6.0, 2.0) -- (6.0, 1.45);
+%\draw[arrow, adaptivecolor] (8.8, 2.0) -- (9.2, 1.45);
 
 % ════════════════════════════════════════════════════════════════════
-% PANEL C: Result — shifted right to avoid annotation
+% PANEL C: Result — Simpler 3-bar comparison
 % ════════════════════════════════════════════════════════════════════
-\node[font=\bfseries\scriptsize, graytext] at (13.5, 5.2) {(c) F1 Improvement};
+\node[font=\bfseries\scriptsize, graytext] at (13.2, 5.2) {(c) F1 Improvement};
 
-% Axes — y-axis at x=12.0 (shifted right)
-\draw[gray!30, thin] (12.0, 1.0) -- (12.0, 4.8);
-\draw[gray!30, thin] (12.0, 1.0) -- (15.8, 1.0);
+% Axes 
+\draw[gray!30, thin] (11.8, 1.0) -- (11.8, 4.8);
+\draw[gray!30, thin] (11.8, 1.0) -- (15.0, 1.0);
 
-% Bars
-\fill[gcncolor!30] (12.3, 1.0) rectangle (12.8, 3.0);
-\fill[gcncolor!50] (13.0, 1.0) rectangle (13.5, 3.3);
-\fill[adaptivecolor!50] (13.7, 1.0) rectangle (14.2, 3.7);
-\fill[adaptivecolor!30] (14.4, 1.0) rectangle (14.9, 3.6);
+% 3 Bars: No Overlap, Fixed Threshold, Adaptive
+\fill[gcncolor!25] (12.1, 1.0) rectangle (12.6, 3.0);  % No Overlap (Lowest)
+\fill[gcncolor!45] (13.1, 1.0) rectangle (13.6, 3.3);  % Fixed (Middle)
+\fill[adaptivecolor!60] (14.1, 1.0) rectangle (14.6, 3.9); % Adaptive (Highest)
 
-% X labels
-\node[font=\tiny, graytext, rotate=45, anchor=south] at (12.55, 1.0) {No Overlap};
-\node[font=\tiny, graytext, rotate=45, anchor=south] at (13.25, 1.0) {WMC=0.30};
-\node[font=\tiny, adaptivecolor, rotate=45, anchor=south, font=\tiny\bfseries] at (13.95, 1.0) {Entropy};
-\node[font=\tiny, adaptivecolor, rotate=45, anchor=south, font=\tiny\bfseries] at (14.65, 1.0) {Margin};
+% Clean X labels (No rotation needed, text is short)
+\node[font=\tiny, graytext, align=center] at (12.35, 0.7) {No\\Overlap};
+\node[font=\tiny, graytext, align=center] at (13.35, 0.7) {Fixed\\Threshold};
+\node[font=\tiny, adaptivecolor, align=center, font=\tiny\bfseries] at (14.35, 0.7) {Adaptive\\(Ours)};
 
 % Y labels
-\node[font=\tiny, graytext, anchor=east] at (11.9, 1.0) {0.7};
-\node[font=\tiny, graytext, anchor=east] at (11.9, 2.0) {0.8};
-\node[font=\tiny, graytext, anchor=east] at (11.9, 3.0) {0.9};
-\node[font=\tiny, graytext, anchor=east] at (11.9, 4.0) {1.0};
+\node[font=\tiny, graytext, anchor=east] at (11.7, 1.0) {0.7};
+%\node[font=\tiny, graytext, anchor=east] at (11.7, 2.0) {0.8};
+%\node[font=\tiny, graytext, anchor=east] at (11.7, 3.0) {0.9};
+\node[font=\tiny, graytext, anchor=east] at (11.7, 4.0) {1.0};
 
 % ════════════════════════════════════════════════════════════════════
 % Arrows between panels — moved down
@@ -153,9 +176,12 @@
 % ════════════════════════════════════════════════════════════════════
 % Bottom summary — moved down, wider text
 % ════════════════════════════════════════════════════════════════════
-\node[draw, rounded corners=5pt, fill=bglight, text width=15cm, align=center, font=\footnotesize, inner sep=6pt] at (8.5, -0.8) {
-  \textbf{Key insight:} Membership ambiguity (entropy/margin) provides a principled, node-specific overlap threshold --- \textbf{eliminating manual WMC tuning} while maintaining competitive performance.
-};
+%\node[draw, rounded corners=5pt, fill=bglight, text width=15cm, align=center, font=\footnotesize, inner sep=6pt] at (8.5, -0.8) {
+%  \textbf{Key insight:} Membership ambiguity (entropy/margin) provides a principled, node-specific overlap threshold --- \textbf{eliminating manual WMC tuning} while maintaining competitive performance.
+%};
 
+\node[draw, rounded corners=5pt, fill=bglight, text width=14.5cm, align=center, font=\footnotesize, inner sep=6pt] at (8, -0.2) {
+  \textbf{Key insight:} Instead of a fixed global rule, node ambiguity (uncertainty in community membership) determines overlap: \textbf{eliminating manual threshold tuning} while maintaining competitive performance.
+};
 \end{tikzpicture}
 \end{document}
