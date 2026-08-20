@@ -132,6 +132,10 @@ Specifically, we introduce three adaptive strategies: Entropy-Adaptive WMC, whic
 We evaluate the proposed methods on six benchmark graph datasets (Cora, CiteSeer, PubMed, ACM, DBLP, and IMDB) using multiple random seeds and compare them with fixed-threshold OCGCN baselines.
 The results demonstrate that adaptive overlap assignment matches tuned fixed-threshold OCGCN while removing the need for dataset-specific WMC grid search.
 Across 20 seeds and six datasets, Margin-Adaptive WMC outperforms the untuned default threshold on four of six datasets, with a significant pooled paired gain ($p=0.022$ across 120 paired runs; aggregate across datasets $p=0.061$), and adaptive methods also improve performance on four of six datasets at comparable overlap ratios.
+% BEGIN_REVIEW
+% اگر این عبارت خط بعد که در پاراگراف قبل آمده است، ضروری نیست آن را حذف کن
+%  ($p=0.022$ across 120 paired runs; aggregate across datasets $p=0.061$)
+% END_REVIEW
 Furthermore, ambiguity analysis shows that high-entropy nodes contain 41--95\% overlap candidates, whereas low-entropy nodes contain only 0--17\%, confirming that membership uncertainty provides a meaningful criterion for overlap selection.
 Overall, Adaptive-OCGCN provides a practical and principled approach for scalable graph neural network training by integrating uncertainty-aware overlap assignment into partition-based learning.}
 
@@ -158,7 +162,13 @@ Overall, Adaptive-OCGCN provides a practical and principled approach for scalabl
 \includegraphics[width=1\linewidth]{graphical_abstract.pdf}
 
 \tableofcontents
-
+% BEGIN_REVIEW
+% مطابق فهرست مطالب الان ۱۱ بخش داریم که برای یک مقاله زیاد است. لطفا آنها را به حدود ۵ بخش کاهش بده. مثلا به نظرم بخش
+% Background
+%  می تواند در بخش قبل از خودش ادغام شود. یا بخش Problem Formulation  در بخش بعد خودش ادغام شود.
+% بخش نتایج به عنوان زیربخشی از بخش قبل خودش باشد. بخشهای آنالیز و Ablation Study ادغام شوند.
+%  فایل با پسوند toc  حاوی فهرست مطالب هست
+% END_REVIEW
 %%======================================================================
 \section{Introduction}
 \label{sec:introduction}
@@ -183,9 +193,9 @@ A node with nearly uniform membership across several communities represents a hi
 However, both nodes are treated identically under a fixed global threshold.
 Furthermore, the appropriate WMC value varies across datasets, requiring additional hyperparameter tuning and limiting the practicality of overlap-aware training.
 
-In this work, we introduce \textbf{Adaptive-OCGCN}, an ambiguity-aware overlap assignment framework that replaces the fixed global overlap criterion with node-specific adaptive decisions.
+In this work, we introduce \textit{Adaptive-OCGCN}, an ambiguity-aware overlap assignment framework that replaces the fixed global overlap criterion with node-specific adaptive decisions.
 The central idea is that community-membership ambiguity provides a natural signal for identifying nodes that benefit most from multi-cluster participation.
-We propose three complementary adaptive strategies: \textbf{Entropy-Adaptive WMC}, which uses normalized membership entropy to identify nodes with distributed community affiliations, \textbf{Margin-Adaptive WMC}, which exploits the gap between the two largest membership probabilities to detect nodes located near community boundaries, and \textbf{Hybrid-Adaptive WMC}, which combines both signals.
+We propose three complementary adaptive strategies: \textit{Entropy-Adaptive WMC}, which uses normalized membership entropy to identify nodes with distributed community affiliations, \textit{Margin-Adaptive WMC}, which exploits the gap between the two largest membership probabilities to detect nodes located near community boundaries, and \textit{Hybrid-Adaptive WMC}, which combines both signals.
 All strategies preserve the original OCGCN formulation while introducing node-level adaptivity through an ambiguity-aware adjustment mechanism.
 
 Unlike previous overlap-aware approaches that treat overlap selection as a global partitioning decision, Adaptive-OCGCN formulates overlap assignment as a node-level uncertainty-aware learning problem.
@@ -194,7 +204,7 @@ The main contributions of this work are summarized as follows:
 \begin{enumerate}
   \item We identify a fundamental limitation of existing overlap-aware Cluster-GCN training: fixed global overlap criteria ignore node-level variation in community-membership ambiguity.
   
-  \item We propose \textbf{Adaptive-OCGCN}, an ambiguity-aware overlap assignment framework with three adaptive strategies, Entropy-Adaptive WMC, Margin-Adaptive WMC, and their Hybrid combination, which derive node-specific overlap decisions from membership uncertainty.
+  \item We propose \textit{Adaptive-OCGCN}, an ambiguity-aware overlap assignment framework with three adaptive strategies, Entropy-Adaptive WMC, Margin-Adaptive WMC, and their Hybrid combination, which derive node-specific overlap decisions from membership uncertainty.
   
   \item We demonstrate through extensive experiments on six benchmark graph datasets that adaptive overlap assignment achieves competitive or improved performance compared with fixed-threshold OCGCN while substantially reducing dataset-specific WMC tuning.
   
@@ -320,12 +330,12 @@ The OCGCN framework consists of four main steps:
 
 \begin{enumerate}
 
-\item \textbf{Soft Community Assignment.}
+\item {Soft Community Assignment.}
 A community detection algorithm based on DANMF produces a soft membership matrix
 $P\in\mathbb{R}^{N\times K}$,
 where $P(i,c)$ indicates the membership strength of node $i$ in cluster $c$.
 
-\item \textbf{Overlap Assignment.}
+\item {Overlap Assignment.}
 For each node $i$, OCGCN selects clusters satisfying:
 
 \begin{equation}
@@ -335,10 +345,10 @@ P(i,c)\geq \mathrm{WMC}\times\max_{c'}P(i,c').
 
 where $\mathrm{WMC}\in(0,1]$ is the Winner Membership Closeness threshold.
 
-\item \textbf{Overlapping Subgraph Construction.}
+\item {Overlapping Subgraph Construction.}
 Nodes selected for multiple clusters are duplicated across corresponding cluster subgraphs while preserving their original features and labels.
 
-\item \textbf{Training and Prediction.}
+\item {Training and Prediction.}
 Independent GCN models are trained on cluster subgraphs.
 For overlapping nodes, predictions from multiple assigned clusters are aggregated.
 
@@ -464,7 +474,7 @@ are processed using the same overlap criterion, despite having fundamentally dif
 
 Therefore, the problem addressed in this work is formulated as follows:
 
-\textbf{Given a soft membership matrix $P$, determine node-specific overlap assignments by exploiting membership ambiguity, while preserving the scalability advantages of partition-based GNN training.}
+\textit{Given a soft membership matrix $P$, determine node-specific overlap assignments by exploiting membership ambiguity, while preserving the scalability advantages of partition-based GNN training.}
 
 More formally, we seek an adaptive overlap assignment function:
 
@@ -477,13 +487,13 @@ where $f(\cdot)$ determines the cluster participation of node $i$ based on its m
 The desired adaptive assignment mechanism should satisfy three properties:
 
 \begin{enumerate}
-    \item \textbf{Ambiguity awareness:}
+    \item {Ambiguity awareness:}
     Nodes with uncertain community memberships should have higher probability of being assigned to multiple clusters.
 
-    \item \textbf{Confidence preservation:}
+    \item {Confidence preservation:}
     Nodes with dominant memberships should avoid unnecessary overlap.
 
-    \item \textbf{Hyperparameter efficiency:}
+    \item {Hyperparameter efficiency:}
     The method should reduce dependence on dataset-specific threshold tuning.
 \end{enumerate}
 %%======================================================================
@@ -692,6 +702,10 @@ IMDB & Heterogeneous & 4,630 & 54,576 & 5 & 1,703 \\
 \end{tabular}
 \end{table}
 
+% BEGIN_REVIEW
+% در جدول {tab:datasets} یک ستون با نام Type  داریم. اما به نظرم Heterogeneous در کنار/برابر  Citation  نیست. ACM  هم از نوع  Citation است. یا این انواع درست شوند یا این ستون حذف شود.
+% END_REVIEW
+
 Cora, CiteSeer, and PubMed are citation networks where nodes represent papers and edges represent citation links.
 ACM, DBLP, and IMDB are heterogeneous networks (papers--authors--subjects for ACM and DBLP; movies--actors--directors for IMDB) projected into homogeneous graphs.
 
@@ -701,9 +715,9 @@ ACM, DBLP, and IMDB are heterogeneous networks (papers--authors--subjects for AC
 We compare against three baseline configurations:
 
 \begin{enumerate}
-  \item \textbf{Cluster-GCN (No Overlap):} Crisp clustering with no overlap nodes, representing the lower bound.
-  \item \textbf{OCGCN with fixed WMC:} The original OCGCN~\citep{Amintoosi2021} with fixed WMC thresholds of 0.10, 0.20, 0.30, 0.40, and 0.50, representing the upper bound when hyperparameters are tuned.
-  \item \textbf{Adaptive WMC variants:} Entropy-Adaptive, Margin-Adaptive, and their Hybrid combination with $\lambda \in \{0.25, 0.50, 0.75\}$.
+  \item {Cluster-GCN (No Overlap):} Crisp clustering with no overlap nodes, representing the lower bound.
+  \item {OCGCN with fixed WMC:} The original OCGCN~\citep{Amintoosi2021} with fixed WMC thresholds of 0.10, 0.20, 0.30, 0.40, and 0.50, representing the upper bound when hyperparameters are tuned.
+  \item {Adaptive WMC variants:} Entropy-Adaptive, Margin-Adaptive, and their Hybrid combination with $\lambda \in \{0.25, 0.50, 0.75\}$.
 \end{enumerate}
 
 To situate the cluster-based results, we additionally evaluate three standard full-batch architectures --- GCN, GraphSAGE, and GAT --- and a \emph{random-partition} control (the same cluster-based pipeline with random node assignment instead of DANMF). The full-batch models use a comparable architecture to the cluster GCN (16 hidden units per layer, dropout 0.5, Adam lr 0.01) but train on the entire graph with 200 epochs; the random-partition control uses the same per-cluster protocol as the DANMF no-overlap configuration. Table~\ref{tab:standard-baselines} and Figure~\ref{fig:standard-baselines} report micro F1 over 20 seeds.
@@ -780,6 +794,10 @@ IMDB      & 0.393~$\pm$~0.012 & 0.428~$\pm$~0.015 & 0.435~$\pm$~0.010 & \textbf{
 \end{tabular}
 \end{table}
 
+% BEGIN_REVIEW
+% به این امید که در جدول {tab:main-results} میانگین همه مجموعه دادگان برای یکی از روشهای پیشنهادی بهتر از دو روش اول باشد، میانگین ستونها را هم محاسبه و به عنوان سطر آخر اضافه کن
+% END_REVIEW
+
 Adaptive methods outperform the no-overlap baseline on all datasets except ACM, where overlap provides no benefit (no-overlap 0.911 vs.\ best adaptive 0.899).
 Margin-Adaptive outperforms the untuned default WMC~=~0.30 on four of six datasets, with the largest gains on ACM (+2.0 F1), PubMed (+1.6 F1), and IMDB (+1.4 F1).
 The Hybrid variant is the best overall method on DBLP (+1.2 F1 over the default).
@@ -791,6 +809,11 @@ Figure~\ref{fig:main-results} visualizes these results.
 \caption{Micro F1 scores across all overlap selection strategies (20 seeds). Bars with red outlines indicate the best result per dataset. Adaptive methods are competitive with or outperform the fixed WMC default on most datasets; on ACM the no-overlap configuration is best.}
 \label{fig:main-results}
 \end{figure}
+
+
+% BEGIN_REVIEW
+% شکل {fig:main-results} یک مشکل کوچک دارد: دور نمودار میله ای روش برنده در هر مجموعه داده یک کادر قرمز رنگ کشیده شده است که خوبه. مشکل این هست که در کادر راهنما (legend)  دور رنگ مربوط به روش برنده در اولین مجموعه داده کادر قرمز کشیده شده است. خط قرمز در این کادر راهنما باید حذف شود. اگر نمی شود، از راهی دیگر برای مشخص کردن روش برنده استفاده شود.
+% END_REVIEW
 
 \subsection{Ablation: Adaptation Strength}
 \label{subsec:ablation}
@@ -915,7 +938,9 @@ Figure~\ref{fig:fair-comparison} visualizes this comparison.
 
 \subsection{Overlap Efficiency}
 \label{subsec:efficiency}
-
+% BEGIN_REVIEW
+% در جدول این بخش ، برتری روشهای پیشنهادی نسبت به روش پایه به وصوح مشخص نیست. اگر واقعا روش پیشنهادی بهتر هست (مثلا میانگین کلی بهتری دارد) مشخص شود. وگرنه بهتر نیست این بخش حذف شود؟
+% END_REVIEW	
 We define overlap efficiency as the F1 gain per unit overlap increase relative to the no-overlap baseline.
 Table~\ref{tab:efficiency} presents this metric for each method.
 
@@ -1173,6 +1198,15 @@ CiteSeer & 0.016 & +0.0 & Very low entropy $\rightarrow$ minimal room for improv
 \end{tabular}
 \end{table}
 
+% BEGIN_REVIEW
+% در  جدول {tab:gains-vs-variance} گفته شده که چون {Entropy Variance} مربوط به Cora نزدیک به مقدار بهینه بوده:
+ % no room regardless of method 
+ % اولا مقدار بهینه از کجا آمد/چیست؟ دوما واریانس آنتروپی مجموعه دادگان PubMed, DBLP هم نزدیک ۰.۰۳ است - نزدیک به مقدار Cora- چرا اونها بهتر شدند؟
+ 
+ % خط چین وسط شکل {fig:gain-variance} چی رو مشخص می کنه؟ نوشته شده `Trend'  اما به نظرم در متن هیچ توضیحی در مورد آن ذکر نشده است.
+% END_REVIEW
+
+
 Performance gains from adaptive thresholding show a partial relationship with entropy variance: the largest gains occur on datasets with higher variance (ACM, PubMed, IMDB), while CiteSeer, with the lowest variance, gains nothing.
 The relationship is not strictly monotonic---ceiling effects on ACM and the near-optimal default on Cora confound it---but high entropy variance is a useful indicator that adaptive methods can help.
 Figure~\ref{fig:gain-variance} shows the relationship between entropy variance and performance gain.
@@ -1215,6 +1249,11 @@ The sensitivity to $\lambda$ is substantially lower than the sensitivity to WMC,
 \subsection{Performance Gains Are Modest but Real}
 
 At matched overlap ratios, adaptive methods improve by +0.000 to +0.018 F1 over fixed baselines on four of six datasets.
+% BEGIN_REVIEW
+% در متن خط قبل نوشته شده از ``+0.000 to +0.018'' . از صفر که گفتن نداره دیگه.
+% همین مورد در بخش نتیجه گیری هم هست.
+% END_REVIEW
+
 The gains are real but modest, reflecting the fact that the original WMC already captures a substantial portion of the useful overlap signal.
 Adaptive methods refine this signal by scaling the threshold based on node-level ambiguity, but the marginal improvement is bounded.
 The contribution is not universal performance superiority over well-tuned baselines, but rather principled threshold selection that eliminates the tuning cost.
@@ -1239,9 +1278,9 @@ This makes Adaptive-OCGCN a general-purpose plugin that can improve partition-ba
 Based on our findings, we recommend:
 
 \begin{enumerate}
-  \item \textbf{Default configuration:} Margin-Adaptive (or the Hybrid) with $\mathrm{WMC}_{\mathrm{base}} = 0.3$ and $\lambda = 0.50$. This single configuration is significantly better than the fixed default in the pooled paired analysis ($p=0.022$), outperforms it on four of six datasets, and provides competitive performance across all tested datasets without per-dataset tuning.
-  \item \textbf{When strong ambiguity is expected:} Increase $\lambda$ to 0.75 (as on IMDB).
-  \item \textbf{When a tuned fixed WMC is available:} Adaptive methods are unlikely to significantly outperform it, but they provide a principled starting point that avoids the tuning cost.
+  \item {Default configuration:} Margin-Adaptive (or the Hybrid) with $\mathrm{WMC}_{\mathrm{base}} = 0.3$ and $\lambda = 0.50$. This single configuration is significantly better than the fixed default in the pooled paired analysis ($p=0.022$), outperforms it on four of six datasets, and provides competitive performance across all tested datasets without per-dataset tuning.
+  \item {When strong ambiguity is expected:} Increase $\lambda$ to 0.75 (as on IMDB).
+  \item {When a tuned fixed WMC is available:} Adaptive methods are unlikely to significantly outperform it, but they provide a principled starting point that avoids the tuning cost.
 \end{enumerate}
 
 
