@@ -1,0 +1,79 @@
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+% Cover Letter - 1 page (condensed)
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\documentclass{article}
+
+\usepackage{charter}
+
+\usepackage[
+	a4paper,
+	top=0.4in,
+	bottom=0.4in,
+	left=1in,
+	right=1in,
+]{geometry}
+
+\setlength{\parindent}{0pt}
+\setlength{\parskip}{0.4em}
+
+\usepackage{graphicx}
+\usepackage[colorlinks=true, linkcolor=magenta, citecolor=magenta, urlcolor=magenta]{hyperref}
+\usepackage{fancyhdr}
+
+\fancypagestyle{firstpage}{%
+	\fancyhf{}
+	\renewcommand{\headrulewidth}{0pt}
+	\renewcommand{\footrulewidth}{1pt}
+}
+
+\AtBeginDocument{\thispagestyle{firstpage}}
+
+\begin{document}
+
+\vspace{-1em}
+
+\rule{\linewidth}{1pt}
+
+\bigskip
+
+\hfill
+\begin{tabular}{l @{}}
+	\today \bigskip\\
+Mahmood Amintoosi\\
+Computer Science Division\\
+Department of Applied Mathematics \&\\
+\href{https://gta-lab.github.io/}{Graph Theory and its Applications Lab} \\
+Faculty of Mathematical Sciences,\\ Ferdowsi University of Mashhad,\\
+IRAN,\\
+\url{https://mamintoosi.github.io/}
+\end{tabular}
+
+\bigskip
+
+Dear Editor,
+
+I am submitting my original paper, ``Adaptive-OCGCN: Ambiguity-Aware Overlap Assignment for Scalable Graph Neural Networks,'' for publication in \textit{Progress in Artificial Intelligence}.
+
+Graph Convolutional Networks (GCNs) face scalability challenges on large graphs. Cluster-based training partitions graphs into subgraphs, but hard partitioning discards cross-cluster information. Overlapping Cluster-GCN (OCGCN) allows boundary nodes to participate in multiple clusters using a fixed global threshold, which ignores node-level variation in community certainty. We propose Adaptive-OCGCN, an ambiguity-aware framework that replaces global thresholding with node-specific adaptive decisions. Three strategies are introduced: Entropy-Adaptive, Margin-Adaptive, and Hybrid-Adaptive WMC.
+
+Contributions: (1)~identifying the limitation of fixed global overlap criteria; (2)~proposing Adaptive-OCGCN with node-specific adaptive strategies; (3)~extensive experiments on six benchmarks (Cora, CiteSeer, PubMed, ACM, DBLP, IMDB) showing that adaptive assignment matches tuned fixed-threshold OCGCN while removing dataset-specific WMC tuning; and (4)~ambiguity analysis confirming that high-entropy nodes are 41--95\% overlap candidates.
+
+This work relates to recent graph learning research in this journal. Bo and Yu~\cite{Bo2025} proposed multi-classifier fusion for GCN-based node classification. Khaledian and Falahati~\cite{Khaledian2026} employed DDI-aware cross-attention in heterogeneous graph learning. Our paper complements these by introducing node-level adaptive thresholding for overlap assignment in scalable GNN training.
+
+The paper is well-suited for \textit{Progress in Artificial Intelligence} as it addresses scalable graph representation learning with comprehensive experiments, ablation studies, statistical tests, and ambiguity analysis, aligning with the journal's interest in computational intelligence and machine learning.
+
+The source code is publicly available at \url{https://github.com/mamintoosi/Adaptive-OCGCN}. The datasets are public benchmarks (Cora, CiteSeer, PubMed, ACM, DBLP, IMDB) and are not included in the repository due to their size (~2.5\,GB total), but they can be downloaded from their original sources.
+
+\bigskip
+
+Sincerely,
+
+Mahmood Amintoosi
+
+\begin{thebibliography}{2}
+\bibitem{Bo2025} Bo, X., Yu, Y. (2025). Improving node classification using GCN and fused classifiers. \textit{Prog. Artif. Intell.}, 14(3), 355--370.
+\bibitem{Khaledian2026} Khaledian, N., Falahati, S. (2026). Safe drug recommendation via heterogeneous graph learning. \textit{Prog. Artif. Intell.}, Online First.
+\end{thebibliography}
+
+\end{document}

@@ -1145,10 +1145,16 @@ Figure~\ref{fig:overlap-by-tercile} visualises the stark contrast between entrop
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=\textwidth]{figures/overlap_vs_entropy.png}
-\caption{Overlap ratio by entropy tercile for each dataset. High-entropy nodes consistently receive substantially more overlap assignments than low-entropy nodes, validating that membership ambiguity is a principled criterion for selecting overlap candidates.}
+\includegraphics[width=\textwidth]{figures/overlap_vs_entropy.pdf}
+\caption{
+  Overlap ratio by entropy tercile for each dataset. 
+  Bars are ordered from low to high entropy (left to right). 
+  For CiteSeer and DBLP, the two lowest terciles are merged into a single bar (Low+Med) due to near-zero overlap in low-entropy nodes. 
+  The pattern confirms that membership ambiguity is a reliable indicator of overlap suitability.}
 \label{fig:overlap-by-tercile}
 \end{figure}
+
+\clearpage
 
 \paragraph{Why Adaptive WMC Helps Some Datasets More Than Others.}
 
@@ -1159,9 +1165,9 @@ Table~\ref{tab:gains-vs-variance} compares each dataset's entropy variance with 
 \centering
 \caption{Relationship between entropy variance and adaptive performance gain.}
 \label{tab:gains-vs-variance}
-\begin{tabular}{llll}
+\begin{tabular}{l c c l} %p{6cm}
 \toprule
-\textbf{Dataset} & \textbf{Entropy Variance} & \textbf{Gain vs.\ Default (F1 pts)} & \textbf{Interpretation} \\
+\textbf{Dataset} & \textbf{\shortstack{Entropy\\Variance}} & \textbf{\shortstack{Gain vs. Default\\(F1 pts)}} & \textbf{Interpretation} \\
 \midrule
 ACM      & 0.036 & +2.0 & Many ambiguous nodes; largest absolute gain \\
 PubMed   & 0.027 & +1.6 & High variance $\rightarrow$ many ambiguous nodes $\rightarrow$ large gain \\
@@ -1193,108 +1199,102 @@ Ceiling effects (ACM), near-optimal defaults (Cora), and very low ambiguity (Cit
 \label{sec:discussion}
 %%======================================================================
 
-This section interprets the experimental findings, discusses their implications, and outlines limitations and future directions.
-We first validate the ambiguity hypothesis and the practical value of eliminating the WMC hyperparameter (Sections~\ref{sec:discussion}-\ref{subsec:agnosticism}), followed by practical recommendations (Section~\ref{subsec:recommendations}) and threats to validity (Section~\ref{sec:threats}).
+This section interprets the experimental findings, discusses their implications, and outlines limitations and future directions. 
+We first validate the ambiguity hypothesis and examine the nature of performance gains (Section~\ref{subsec:interpretation}). 
+We then discuss the practical benefits of eliminating the WMC hyperparameter and provide recommendations (Section~\ref{subsec:practical}). 
+The agnosticism of our method to the underlying community detection algorithm is discussed in Section~\ref{subsec:agnosticism}. 
+Threats to validity are addressed in Section~\ref{sec:threats}, followed by concluding remarks in Section~\ref{sec:conclusion}.
 
-\subsection{The Ambiguity Hypothesis Is Validated}
+\subsection{Interpretation of Key Findings}
+\label{subsec:interpretation}
 
-The stratified analysis and correlation studies provide strong evidence that community-membership ambiguity identifies useful overlap nodes.
-High-entropy nodes are 41--95\% overlap candidates, and they are assigned to 1.5--3.4 clusters on average.
-The mechanism is intuitive: nodes with ambiguous memberships genuinely participate in multiple communities, and including them in multiple cluster subgraphs provides the GCN with richer training signals.
-Low-entropy nodes, by contrast, are well-served by single-cluster training.
+The stratified analysis and correlation studies provide strong evidence that community-membership ambiguity identifies useful overlap nodes. 
+High-entropy nodes receive overlap assignments in 41--95\% of cases and are assigned to 1.5--3.4 clusters on average, confirming that they genuinely straddle multiple communities. 
+Low-entropy nodes, by contrast, receive overlap in only 0--17\% of cases and are well-served by single-cluster training. 
+This pattern is consistent across all datasets and provides compelling empirical support for our central hypothesis.
 
-\subsection{Adaptive Thresholding Eliminates a Hyperparameter}
+At matched overlap ratios, adaptive methods improve performance by +0.003 to +0.018 F1 over fixed baselines on four of six datasets. 
+The gains are modest but real, reflecting the fact that the original WMC threshold already captures a substantial portion of the useful overlap signal. 
+Adaptive methods refine this signal by scaling the threshold based on node-level ambiguity, but the marginal improvement is bounded. 
+The contribution is not universal superiority over well-tuned baselines, but rather principled threshold selection that eliminates the tuning cost.
 
-The primary practical contribution is the elimination of the WMC hyperparameter search.
-Our fixed-WMC comparison (Table~\ref{tab:main-results}) shows that the optimal WMC varies across datasets: WMC~=~0.30 is best for Cora and CiteSeer, WMC~=~0.20 for PubMed, and WMC~=~0.10 for DBLP and IMDB (and no overlap at all on ACM).
-Without adaptive methods, practitioners must search over WMC values---a costly process that requires retraining on each dataset.
-Margin-Adaptive (or the Hybrid) with $\lambda = 0.50$ achieves competitive performance across all six datasets without per-dataset tuning, and is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
-Importantly, this is not a claim of universal superiority over well-tuned baselines, but rather a demonstration that a single universal configuration ($\mathrm{WMC}_{\mathrm{base}} = 0.3$, $\lambda = 0.5$) performs comparably to per-dataset tuned WMC, eliminating the need for grid search.
-This is particularly valuable in scenarios where practitioners work with many graphs or where the optimal WMC is not known a priori.
-Furthermore, while $\lambda$ is technically a hyperparameter, it acts as a global robustness knob rather than a dataset-specific threshold.
-As shown in the ablation study (Tables~\ref{tab:entropy-lambda},~\ref{tab:margin-lambda}, and~\ref{tab:hybrid-lambda}), setting $\lambda = 0.50$ consistently yields near-optimal or optimal results across all six diverse datasets without any per-dataset tuning.
-This contrasts sharply with the fixed WMC baseline, where the optimal value varies drastically across datasets (e.g., 0.10 for DBLP/IMDB vs.~0.30 for Cora/CiteSeer).
-The sensitivity to $\lambda$ is substantially lower than the sensitivity to WMC, thus practically eliminating the need for a grid search.
-
-\subsection{Performance Gains Are Modest but Real}
-
-At matched overlap ratios, adaptive methods improve by +0.003 to +0.018 F1 over fixed baselines on four of six datasets.
-
-The gains are real but modest, reflecting the fact that the original WMC already captures a substantial portion of the useful overlap signal.
-Adaptive methods refine this signal by scaling the threshold based on node-level ambiguity, but the marginal improvement is bounded.
-The contribution is not universal performance superiority over well-tuned baselines, but rather principled threshold selection that eliminates the tuning cost.
-
-\subsection{Entropy vs.\ Margin: Complementary Signals}
-
-Entropy-Adaptive, Margin-Adaptive, and the Hybrid variant perform similarly overall, but show different per-dataset preferences.
-On datasets where ambiguity is primarily a top-two competition, Margin-Adaptive performs best with light adaptation on DBLP ($\lambda = 0.25$) and moderate adaptation on CiteSeer ($\lambda = 0.50$).
-On datasets with richer multi-cluster ambiguity (PubMed, IMDB), stronger adaptation ($\lambda = 0.75$) helps all variants.
-The weak correlation between entropy and ambiguity on DBLP and CiteSeer ($r \approx -0.4$) confirms that these measures capture genuinely different aspects of the membership distribution.
+Entropy-Adaptive, Margin-Adaptive, and the Hybrid variant perform similarly overall but show different per-dataset preferences. 
+Margin-Adaptive performs best on datasets where ambiguity is primarily a top-two competition (DBLP: $\lambda=0.25$; CiteSeer: $\lambda=0.50$). 
+On datasets with richer multi-cluster ambiguity (PubMed, IMDB), stronger adaptation ($\lambda=0.75$) helps all variants. 
+The weak correlation between entropy and ambiguity on DBLP and CiteSeer ($r \approx -0.4$) confirms that these measures capture genuinely different aspects of the membership distribution. 
 The Hybrid variant combines both signals and achieves the best overall result on DBLP, confirming their complementarity.
+
+\subsection{Practical Benefits and Recommendations}
+\label{subsec:practical}
+
+The primary practical contribution of this work is the elimination of the WMC hyperparameter search. 
+Our fixed-WMC comparison shows that the optimal WMC varies substantially across datasets: WMC=0.30 for Cora and CiteSeer, WMC=0.20 for PubMed, WMC=0.10 for DBLP and IMDB, and no overlap for ACM. 
+Without adaptive methods, practitioners must search over WMC values—a costly process that requires retraining on each dataset. 
+Margin-Adaptive (or the Hybrid) with $\lambda = 0.50$ achieves competitive performance across all six datasets without per-dataset tuning and is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
+
+Importantly, this is not a claim of universal superiority over well-tuned baselines, but rather a demonstration that a single universal configuration ($\mathrm{WMC}_{\mathrm{base}}=0.3$, $\lambda=0.5$) performs comparably to per-dataset tuned WMC. 
+While $\lambda$ is technically a hyperparameter, it acts as a global robustness knob rather than a dataset-specific threshold. 
+As shown in the ablation study, setting $\lambda=0.50$ consistently yields near-optimal results across all datasets, with sensitivity substantially lower than that of the fixed WMC baseline.
+
+Based on these findings, we recommend:
+
+\begin{enumerate}
+  \item {Default configuration}: Margin-Adaptive (or the Hybrid) with $\mathrm{WMC}_{\mathrm{base}}=0.3$ and $\lambda=0.50$. 
+  \item {When strong ambiguity is expected}: Increase $\lambda$ to 0.75 (as on IMDB). 
+  \item {When a tuned fixed WMC is available}: Adaptive methods are unlikely to significantly outperform it, but they provide a principled starting point that avoids the tuning cost.
+\end{enumerate}
 
 \subsection{Community-Detection Agnosticism}
 \label{subsec:agnosticism}
 
-While DANMF was utilized in this study to generate the soft membership matrix $P$, the proposed adaptive thresholding mechanism is fundamentally agnostic to the underlying community detection algorithm.
-As long as the chosen clustering method outputs a normalized membership matrix $P \in \mathbb{R}^{N \times K}$ whose rows sum to one, the adaptive WMC formulas (Entropy, Margin, and Hybrid) can be applied directly without any modification.
+While DANMF was utilized in this study to generate the soft membership matrix $P$, the proposed adaptive thresholding mechanism is fundamentally agnostic to the underlying community detection algorithm. 
+As long as the chosen clustering method outputs a normalized membership matrix $P \in \mathbb{R}^{N \times K}$ whose rows sum to one, the adaptive WMC formulas (Entropy, Margin, and Hybrid) can be applied directly without any modification. 
 This makes Adaptive-OCGCN a general-purpose plugin that can improve partition-based GNN training pipelines utilizing various soft clustering techniques.
-
-\subsection{Practical Recommendations}
-\label{subsec:recommendations}
-
-Based on our findings, we recommend:
-
-\begin{enumerate}
-  \item {Default configuration:} Margin-Adaptive (or the Hybrid) with $\mathrm{WMC}_{\mathrm{base}} = 0.3$ and $\lambda = 0.50$. This single configuration is significantly better than the fixed default in the pooled paired analysis ($p=0.022$), outperforms it on four of six datasets, and provides competitive performance across all tested datasets without per-dataset tuning.
-  \item {When strong ambiguity is expected:} Increase $\lambda$ to 0.75 (as on IMDB).
-  \item {When a tuned fixed WMC is available:} Adaptive methods are unlikely to significantly outperform it, but they provide a principled starting point that avoids the tuning cost.
-\end{enumerate}
 
 \subsection{Threats to Validity}
 \label{sec:threats}
 
 \paragraph{Dataset scope.}
-We evaluate on six datasets, all of moderate size (2,363--19,717 nodes).
-The largest graph, PubMed, has 19,717 nodes, which is relatively small by modern GNN standards, even though the paper title emphasizes scalable GNNs.
-It is crucial, however, to distinguish between the scalability of the proposed adaptive thresholding mechanism and the scalability of the upstream clustering algorithm.
-The adaptive WMC framework itself is theoretically highly scalable: the node-level ambiguity scores add only $O(NK)$ or $O(NK \log K)$ computational overhead, which is negligible compared with GCN training.
-The current evaluation is limited to standard benchmark sizes because the upstream dependency---specifically the DANMF clustering algorithm used to generate $P$---becomes a computational bottleneck on graphs with millions of nodes.
-Therefore, the proposed method is fully prepared for large-scale graphs, provided it is paired with a more scalable soft community detection algorithm in future work.
-Scaling to larger graphs (e.g., OGB benchmarks with millions of nodes) would further strengthen the claims and test whether the ambiguity signal remains informative at scale.
+We evaluate on six datasets, all of moderate size (2,363--19,717 nodes). 
+The largest graph, PubMed, has 19,717 nodes, which is relatively small by modern GNN standards. 
+However, it is crucial to distinguish between the scalability of the proposed adaptive thresholding mechanism and that of the upstream clustering algorithm. 
+The adaptive WMC framework itself is theoretically highly scalable: the node-level ambiguity scores add only $O(NK)$ or $O(NK \log K)$ computational overhead, which is negligible compared with GCN training. 
+The current evaluation is limited to standard benchmark sizes because the upstream dependency—specifically the DANMF clustering algorithm—becomes a computational bottleneck on graphs with millions of nodes. 
+Scaling to larger graphs (e.g., OGB benchmarks) would further strengthen the claims and test whether the ambiguity signal remains informative at scale.
 
 \paragraph{Community detection method.}
-All experiments use DANMF for membership estimation.
-Different community detection methods may produce different membership distributions, potentially affecting the ambiguity signal.
-The adaptive framework is method-agnostic in principle, but the specific entropy and margin values depend on the quality of the membership estimation.
-On PubMed, DANMF yields a highly imbalanced partition (the largest cluster contains about 62\% of the nodes), which degrades the cluster-based no-overlap baseline (0.521 micro F1) below a random-partition control (0.852); the adaptive overlap methods still recover substantial accuracy (0.628) in this regime.
-This is a limitation of the clustering step rather than of overlap selection, and it suggests that balancing cluster sizes (e.g., via size constraints or a different $K$) is a promising avenue for future work.
+All experiments use DANMF for membership estimation. 
+Different community detection methods may produce different membership distributions, potentially affecting the ambiguity signal. 
+The adaptive framework is method-agnostic in principle, but the specific entropy and margin values depend on the quality of the membership estimation. 
+On PubMed, DANMF yields a highly imbalanced partition (the largest cluster contains about 62\% of the nodes), which degrades the cluster-based no-overlap baseline (0.521 micro F1) below a random-partition control (0.852). 
+The adaptive overlap methods still recover substantial accuracy (0.628) in this regime, suggesting that balancing cluster sizes is a promising avenue for future work.
 
-\paragraph{Overlap ratio range.}
-Our experiments fix $\mathrm{WMC}_{\mathrm{base}} = 0.3$ and vary only $\lambda$.
-Different base WMC values could shift the overlap ratio range and affect the relative advantage of adaptive methods.
-We chose $\mathrm{WMC}_{\mathrm{base}} = 0.3$ because it is the default in the original OCGCN.
+%\paragraph{Overlap ratio range.}
+%Our experiments fix $\mathrm{WMC}_{\mathrm{base}}=0.3$ and vary only $\lambda$. 
+%Different base WMC values could shift the overlap ratio range and affect the relative advantage of adaptive methods. 
+%We chose $\mathrm{WMC}_{\mathrm{base}}=0.3$ because it is the default in the original OCGCN.
 
 \paragraph{Statistical power.}
-With 20 seeds per configuration in the main comparison (10 in the ablation), we detected a significant pooled improvement of Margin-Adaptive over the default threshold ($p = 0.022$).
+With 20 seeds per configuration in the main comparison (10 in the ablation), we detected a significant pooled improvement of Margin-Adaptive over the default threshold ($p=0.022$). 
 Non-significant per-dataset differences on Cora, PubMed, and ACM could still reflect limited power to detect small effect sizes; larger-scale experiments with more seeds would clarify this.
 
 \paragraph{Single GCN architecture.}
-We use a fixed GCN with 16 hidden units per layer.
-Different architectures (deeper/wider GCNs, attention-based models) might interact differently with overlap assignment.
+We use a fixed GCN with 16 hidden units per layer. 
+Different architectures (deeper/wider GCNs, attention-based models) might interact differently with overlap assignment. 
 The adaptive thresholding is architecture-agnostic, but the magnitude of its benefit may vary.
 
 \subsection{Conclusion}
 \label{sec:conclusion}
 
-This paper introduces adaptive overlap thresholding for Overlapping Cluster-GCN, replacing the global WMC threshold with node-specific thresholds derived from community-membership ambiguity.
-Three variants are proposed: Entropy-Adaptive WMC, which scales the threshold by normalized membership entropy, Margin-Adaptive WMC, which scales by the ambiguity of the top-two membership gap, and Hybrid-Adaptive WMC, which combines both signals.
-All three replace per-dataset WMC grid search with a single universal configuration ($\mathrm{WMC}_{\mathrm{base}} = 0.3$, $\lambda = 0.5$) that achieves competitive performance across six benchmark graphs; Margin-Adaptive is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
+This paper introduces adaptive overlap thresholding for Overlapping Cluster-GCN, replacing the global WMC threshold with node-specific thresholds derived from community-membership ambiguity. 
+Three variants are proposed: Entropy-Adaptive WMC, which scales the threshold by normalized membership entropy; Margin-Adaptive WMC, which scales by the ambiguity of the top-two membership gap; and Hybrid-Adaptive WMC, which combines both signals. 
+All three replace per-dataset WMC grid search with a single universal configuration ($\mathrm{WMC}_{\mathrm{base}}=0.3$, $\lambda=0.5$) that achieves competitive performance across six benchmark graphs; Margin-Adaptive is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
 
-The core hypothesis---that membership ambiguity identifies useful overlap nodes---is validated through stratified analysis showing that high-entropy nodes are 41--95\% overlap candidates, with strong correlations between entropy and cluster count on all datasets.
+The core hypothesis—that membership ambiguity identifies useful overlap nodes—is validated through stratified analysis showing that high-entropy nodes are 41--95\% overlap candidates, with strong correlations between entropy and cluster count on all datasets. 
 Performance gains from adaptive thresholding are modest but real: at matched overlap ratios, adaptive methods improve by +0.003 to +0.018 F1 over fixed baselines on four of six datasets, and Margin-Adaptive is significantly better than the fixed default in the pooled paired analysis ($p=0.022$).
 
-The practical value of adaptive thresholding is the removal of the WMC hyperparameter search, a process that varies across datasets and requires costly retraining.
-Margin-Adaptive (or the Hybrid) with $\lambda = 0.50$ provides a robust default that works well across diverse graph types.
+The practical value of adaptive thresholding is the removal of the WMC hyperparameter search, a process that varies across datasets and requires costly retraining. 
+Margin-Adaptive (or the Hybrid) with $\lambda=0.50$ provides a robust default that works well across diverse graph types. 
 Future work should explore scaling to larger graphs, per-node $\lambda$ adaptation, and theoretical analysis of the overlap quality bound.
 
 %%======================================================================
@@ -1315,7 +1315,7 @@ The authors have no relevant financial or non-financial interests to disclose.
 
 \subsection*{Declaration of Generative AI and AI-assisted Technologies in the Writing Process}
 
-During the preparation of this work, the author used AI-assisted tools and services, including Mimo and Buffy (via Freebuff) and DeepSeek for various aspects of the research and manuscript preparation process, including writing and editing assistance, code development, experimental design and execution, data analysis, figure and table preparation, manuscript organization, and scientific presentation. All generated content and outputs were reviewed, verified, and edited by the author as appropriate. The author takes full responsibility for the accuracy, integrity, and final content of the publication.
+During the preparation of this work, the author used AI-assisted tools and services, including Mimo, Freebuff and DeepSeek for various aspects of the research and manuscript preparation process, including writing and editing assistance, code development, experimental design and execution, data analysis, figure and table preparation, manuscript organization, and scientific presentation. All generated content and outputs were reviewed, verified, and edited by the author as appropriate. The author takes full responsibility for the accuracy, integrity, and final content of the publication.
 
 
 \end{document}
