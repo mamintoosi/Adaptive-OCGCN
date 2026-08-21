@@ -127,13 +127,6 @@ python src/run_fixed_wmc_comparison.py --seeds 20
 python src/run_full_ambiguity_analysis.py
 ```
 
-### Compiling the Paper
-
-```bash
-cd adaptive-ocgcn-latex
-pdflatex sn-article.tex
-```
-
 ## Key Results
 
 - Adaptive thresholding eliminates the WMC hyperparameter while maintaining competitive performance
