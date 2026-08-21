@@ -8,7 +8,7 @@ Overlapping Cluster-GCN (OCGCN) extends Cluster-GCN by allowing nodes to partici
 
 ## Method
 
-We propose two adaptive overlap selection methods that replace the global WMC with a node-specific threshold derived from each node's membership distribution:
+We propose three adaptive overlap selection methods that replace the global WMC with a node-specific threshold derived from each node's membership distribution:
 
 **Entropy-Adaptive WMC** — scales the threshold by normalized membership entropy:
 
@@ -61,15 +61,15 @@ Adaptive-OCGCN/
 │   ├── run_ablation.py              # Ablation study runner (λ sensitivity)
 │   ├── run_ambiguity_analysis.py    # Ambiguity analysis
 │   ├── run_full_ambiguity_analysis.py
-│   └── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison + stats
+│   ├── run_fixed_wmc_comparison.py  # Fixed vs adaptive WMC comparison + stats
+│   ├── run_standard_baselines.py    # Standard full-batch baselines
+│   ├── measure_runtime.py           # Runtime measurement
+│   ├── generate_tsne.py             # t-SNE visualization
+│   ├── generate_tsne_comparison.py  # Comparative t-SNE (baseline vs adaptive)
+│   └── generate_tsne_danmf_clusters.py  # DANMF cluster t-SNE
 ├── results/                         # Experimental results
 │   ├── plots/                       # Generated figures
 │   └── *.csv                        # Raw and summary results
-├── adaptive-ocgcn-latex/            # Paper manuscript
-│   ├── sn-article.tex               # LaTeX source (Springer Nature template)
-│   ├── elsarticle/                  # Archived Elsevier (elsarticle) version
-│   ├── figures/                     # Paper figures (13 PNGs)
-│   └── generate_plots.py            # Figure generation script
 ├── docs/
 │   ├── ALGORITHM_OVERVIEW.md        # Algorithm description
 │   └── CODEBASE_OVERVIEW.md         # Codebase documentation
@@ -114,7 +114,6 @@ assignments = selector.select_overlap(P, valid_clusters)
 ### Running Experiments
 
 ```bash
-```bash
 # Full experiment suite (6 datasets, 10 seeds)
 python src/run_full_experiments.py --seeds 10
 
@@ -154,13 +153,6 @@ The `src/` modules must be importable; run scripts from the repository root or a
 
 ## Citation
 
-```bibtex
-@article{Amintoosi2021overlapping,
-author = {Mahmood Amintoosi},
-title = {Overlapping clusters in cluster graph convolutional networks},
-journal = {Journal of Algorithms and Computation},
-volume = {53},
-number = {2},
-pages = {33--45},
-year = {2021}
-```
+If you use this code, please cite:
+
+> M. Amintoosi, *Adaptive-OCGCN: Ambiguity-Aware Overlap Assignment for Scalable Graph Neural Networks*, (submitted).

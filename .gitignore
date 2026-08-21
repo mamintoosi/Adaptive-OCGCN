@@ -223,6 +223,9 @@ dataset/
 datasets/
 data/
 
+# ===== LaTeX manuscript directory (not committed to repo) =====
+adaptive-ocgcn-latex/
+
 # ===== LaTeX junk files =====
 *.aux
 *.log
