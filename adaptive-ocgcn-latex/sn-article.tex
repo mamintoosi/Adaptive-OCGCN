@@ -30,7 +30,7 @@
  
 %%\documentclass[pdflatex,sn-nature]{sn-jnl}% Style for submissions to Nature Portfolio journals
 %%\documentclass[pdflatex,sn-basic]{sn-jnl}% Basic Springer Nature Reference Style/Chemistry Reference Style
-\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Numbered Reference Style
+\documentclass[pdflatex,sn-mathphys-num]{sn-jnl}% Math and Physical Sciences Numbered Reference Style
 %%\documentclass[pdflatex,sn-mathphys-ay]{sn-jnl}% Math and Physical Sciences Author Year Reference Style
 %%\documentclass[pdflatex,sn-aps]{sn-jnl}% American Physical Society (APS) Reference Style
 %%\documentclass[pdflatex,sn-vancouver-num]{sn-jnl}% Vancouver Numbered Reference Style
@@ -153,9 +153,8 @@ Overall, Adaptive-OCGCN provides a practical and principled approach for scalabl
 
 \maketitle
 
-\includegraphics[width=1\linewidth]{graphical_abstract.pdf}
 
-\tableofcontents
+%\tableofcontents
 
 %%======================================================================
 \section{Introduction}
@@ -181,7 +180,19 @@ A node with nearly uniform membership across several communities represents a hi
 However, both nodes are treated identically under a fixed global threshold.
 Furthermore, the appropriate WMC value varies across datasets, requiring additional hyperparameter tuning and limiting the practicality of overlap-aware training.
 
-In this work, we introduce \textit{Adaptive-OCGCN}, an ambiguity-aware overlap assignment framework that replaces the fixed global overlap criterion with node-specific adaptive decisions.
+\begin{figure}[t]
+\centering
+\includegraphics[width=\linewidth]{graphical_abstract.pdf}
+\caption{
+  Conceptual overview of the adaptive overlap assignment framework. 
+  (a) Conventional fixed-threshold approach applies a uniform global rule, where boundary nodes (e.g., node~5) are assigned to a single cluster, discarding cross-cluster connections. 
+  (b) The proposed node-specific adaptive mechanism leverages membership ambiguity to set per-node thresholds, allowing highly ambiguous nodes to participate in multiple clusters and preserve cross-cluster information. 
+  (c) Schematic illustration contrasting the two strategies, highlighting the conceptual benefit of adaptive thresholding.
+}
+\label{fig:framework}
+\end{figure}
+
+In this work, we introduce \textit{Adaptive-OCGCN}, an ambiguity-aware overlap assignment framework that replaces the fixed global overlap criterion with node-specific adaptive decisions (Figure \ref{fig:framework}).
 The central idea is that community-membership ambiguity provides a natural signal for identifying nodes that benefit most from multi-cluster participation.
 We propose three complementary adaptive strategies: \textit{Entropy-Adaptive WMC}, which uses normalized membership entropy to identify nodes with distributed community affiliations, \textit{Margin-Adaptive WMC}, which exploits the gap between the two largest membership probabilities to detect nodes located near community boundaries, and \textit{Hybrid-Adaptive WMC}, which combines both signals.
 All strategies preserve the original OCGCN formulation while introducing node-level adaptivity through an ambiguity-aware adjustment mechanism.
@@ -204,17 +215,20 @@ The main contributions of this work are summarized as follows:
 \label{sec:related}
 %%======================================================================
 
-This section surveys three lines of research relevant to our work: scalable graph neural network training (Section~\ref{subsec:clustergcn}), overlapping community detection and soft membership modeling (Section~\ref{subsec:danmf}), and overlap-aware partition-based training (Section~\ref{subsec:ocgcn}).
-We also review recent advances in adaptive and uncertainty-aware graph learning (Section~\ref{subsec:ambiguity}) and motivate our ambiguity-based approach.
+This section reviews the relevant literature in two parts. 
+First, we survey the broad research areas that contextualize our work: scalable graph neural network training (Section~\ref{subsec:scalable-gnn}), overlapping community detection and soft membership modeling (Section~\ref{subsec:overlap-community}), overlap-aware partition-based GNN training (Section~\ref{subsec:overlap-aware}), and adaptive and uncertainty-aware graph learning (Section~\ref{subsec:adaptive-uncertainty}). 
+Second, we provide detailed technical background on the specific methods that directly underpin our proposed approach: Cluster-GCN (Section~\ref{subsec:clustergcn}), Overlapping Cluster-GCN (Section~\ref{subsec:ocgcn}), soft community detection via DANMF (Section~\ref{subsec:danmf}), and community membership ambiguity measures (Section~\ref{subsec:ambiguity}). 
+This organization guides the reader from the general landscape to the specific gaps that motivate our ambiguity-based adaptive thresholding framework.
 
 \subsection{Scalable Graph Neural Network Training}
-
+\label{subsec:scalable-gnn}
 Graph Convolutional Networks (GCNs) have become a fundamental approach for representation learning on graph-structured data by iteratively aggregating information from neighboring nodes~\citep{kipf2017semi}.
 However, applying GCNs to large-scale graphs remains challenging due to the neighborhood explosion problem, where multi-layer message passing requires accessing exponentially increasing neighborhoods.
 
 Several approaches have been proposed to improve the scalability of GNN training.
 GraphSAGE~\citep{GraphSAGE} and FastGCN~\citep{chen2018fastgcn} reduce computational costs through neighborhood sampling, while VR-GCN~\citep{dai2018learning} introduces variance reduction techniques by reusing historical node representations.
-Although sampling-based approaches improve efficiency, they may introduce approximation errors and remain challenging for very deep architectures.
+Although sampling-based approaches improve efficiency, they may introduce approximation errors and remain challenging for very deep architectures. 
+Beyond scalability, several studies have sought to improve GCN classification accuracy through ensemble strategies; for instance, Bo and Yu~\citep{Bo2025} proposed a multi-classifier fusion approach that aggregates predictions from multiple GCN models using fuzzy integrals, achieving consistent gains on citation network benchmarks.
 
 Cluster-GCN~\citep{Cluster-GCN} follows a different strategy by partitioning a large graph into smaller clusters and performing mini-batch training on cluster-induced subgraphs.
 By restricting message passing within each partition, Cluster-GCN significantly reduces memory and computational requirements while maintaining competitive performance.
@@ -222,6 +236,7 @@ However, this approach relies on a hard partitioning assumption: nodes are assig
 Consequently, nodes located near community boundaries may lose important structural information during training.
 
 \subsection{Overlapping Community Learning and Soft Membership Modeling}
+\label{subsec:overlap-community}
 
 Many real-world networks exhibit overlapping community structures, where individual nodes simultaneously participate in multiple semantic or structural groups.
 Unlike traditional hard clustering methods, overlapping community detection approaches aim to learn soft membership representations that capture the degree of association between nodes and communities.
@@ -240,6 +255,8 @@ Although these approaches effectively model overlapping community structures, th
 They do not consider how overlapping memberships can be exploited to improve scalable graph neural network training under partition-based learning frameworks.
 
 \subsection{Overlap-Aware Partition-Based GNN Training}
+\label{subsec:overlap-aware}
+
 
 While most previous studies have investigated overlapping communities for network analysis and community discovery, Overlapping Cluster-GCN (OCGCN)~\citep{Amintoosi2021} introduced a different perspective by utilizing overlapping memberships to improve scalable graph neural network training.
 
@@ -259,6 +276,7 @@ Such a criterion assumes that all nodes have similar levels of community certain
 Therefore, overlap selection in OCGCN remains dependent on dataset-specific threshold tuning rather than node-level structural characteristics.
 
 \subsection{Adaptive and Uncertainty-Aware Graph Learning}
+\label{subsec:adaptive-uncertainty}
 
 Adaptive mechanisms have recently attracted increasing attention in graph representation learning.
 Graph Attention Networks (GAT)~\citep{vel2018graph}, for example, learn node-specific importance coefficients to dynamically control information aggregation.
@@ -267,6 +285,8 @@ Similarly, adaptive neighborhood selection approaches adjust message-passing str
 Beyond adaptive aggregation, uncertainty-aware learning has emerged as an important direction for understanding model reliability and decision confidence.
 Gawlikowski et al.~\citep{Gawlikowski2023} provided a comprehensive survey of uncertainty estimation methods in deep neural networks, highlighting the importance of uncertainty modeling for reliable prediction.
 Several graph learning studies have also incorporated confidence-aware mechanisms for improving robustness and reliability~\citep{Kwon2022, Park2023}.
+
+Recent work has further extended adaptive mechanisms to heterogeneous and safety-critical settings; Khaledian and Falahati~\citep{Khaledian2026} employed a DDI-aware cross-attention mechanism to fuse GraphSAGE embeddings with pharmacological safety signals, demonstrating that attention-based adaptivity can effectively balance predictive accuracy and constraint satisfaction in graph-based recommendation systems.
 
 However, existing adaptive and uncertainty-aware graph learning approaches mainly focus on message aggregation, neighborhood selection, or prediction reliability.
 They do not address the problem of deciding which nodes should participate in multiple graph partitions during scalable GNN training.
@@ -463,6 +483,8 @@ This section introduces our adaptive overlap assignment framework.
 Section~\ref{subsec:overview} provides a high-level overview of the adaptive threshold mechanism.
 Sections~\ref{subsec:entropy-adaptive}--\ref{subsec:hybrid-adaptive} present three complementary adaptive strategies based on entropy, margin, and hybrid ambiguity signals.
 Section~\ref{subsec:comparison} compares these strategies, and algorithm \ref{alg:adaptive} summarizes the complete procedure.
+
+
 
 \subsection{Overview}
 \label{subsec:overview}
@@ -709,6 +731,10 @@ Two observations follow. First, full-batch training achieves higher accuracy tha
 \subsection{Results}
 \label{sec:results}
 
+We now present the experimental results. 
+All experiments follow the same protocol, which we first describe below, and then report the quantitative findings.
+
+\textbf{Protocol settings.}
 All experiments use:
 \begin{itemize}
   \item $\mathrm{WMC}_{\mathrm{base}} = 0.3$
@@ -722,6 +748,8 @@ All experiments use:
 The adaptive overlap selection adds negligible computational overhead: entropy and margin computations are $O(K)$ and $O(K \log K)$ per node respectively, applied once after DANMF convergence and before GCN training.
 Measured wall-clock training times are reported in Table~\ref{tab:runtime} (NVIDIA RTX 3090, mean over 20 seeds).
 
+The remainder of this subsection presents the detailed experimental findings. 
+We first compare adaptive methods against fixed-threshold baselines, then examine the sensitivity to adaptation strength via ablation, ensure a fair comparison by matching overlap ratios, analyze overlap efficiency, report computational overhead, assess statistical significance, and finally provide an in-depth ambiguity analysis to validate our core hypothesis.
 
 \subsubsection{Adaptive vs.\ Global WMC}
 \label{subsec:adaptive-vs-global}
@@ -748,7 +776,7 @@ IMDB      & 0.393~$\pm$~0.012 & 0.428~$\pm$~0.015 & 0.435~$\pm$~0.010 & \textbf{
 \end{table}
 
 Adaptive methods outperform the no-overlap baseline on all datasets except ACM, where overlap provides no benefit (no-overlap 0.911 vs.\ best adaptive 0.899).
-Margin-Adaptive outperforms the untuned default WMC~=~0.30 on four of six datasets, with the largest gains on ACM (+2.0 F1), PubMed (+1.6 F1), and IMDB (+1.4 F1).
+Margin-Adaptive outperforms the untuned default WMC~=~0.30 on four of six datasets, with the largest gains on ACM (+2.0 F1, i.e. +2.0 percentage points), PubMed (+1.6 F1), and IMDB (+1.4 F1).
 The Hybrid variant is the best overall method on DBLP (+1.2 F1 over the default).
 Figure~\ref{fig:main-results} visualizes these results.
 
@@ -999,13 +1027,22 @@ Figure~\ref{fig:heatmap} provides a comprehensive view of the micro-F1 differenc
 \subsubsection{Ambiguity Analysis}
 \label{sec:ambiguity-analysis}
 
-\paragraph{Dataset Ambiguity Statistics.}
+This subsection provides an in-depth analysis of the relationship between node-level membership ambiguity and overlap assignment.
+Our central hypothesis is that nodes with uncertain community memberships are more suitable candidates for overlap than nodes with confident assignments.
+To test this hypothesis, we conduct three complementary analyses. 
+First, we present summary statistics of ambiguity measures across all datasets. % (Section~4.3.7.1). 
+Second, we examine Spearman rank correlations between ambiguity indicators and overlap properties. %(Section~4.3.7.2). 
+Third, we stratify nodes by entropy terciles to directly compare overlap rates across ambiguity levels. %(Section~4.3.7.3). 
+Finally, we investigate why adaptive thresholding improves performance more substantially on some datasets than others. % (Section~4.3.7.4).
 
-Table~\ref{tab:ambiguity-stats} presents the membership ambiguity statistics derived from DANMF output across all datasets.
+\paragraph{Dataset Ambiguity Statistics.}
+\label{sec:amb-stats}
+
+Table~\ref{tab:ambiguity-stats} reports the mean and standard deviation of normalized entropy and margin-based ambiguity, along with the observed overlap ratio and average number of clusters per node for each dataset, all derived from the DANMF membership matrix under the fixed WMC=0.30 overlap criterion.
 
 \begin{table}[ht]
 \centering
-\caption{Membership ambiguity statistics per dataset (DANMF output, WMC~=~0.30 overlap).}
+\caption{Summary statistics of membership ambiguity and overlap behavior across datasets.}
 \label{tab:ambiguity-stats}
 \begin{tabular}{lcccccc}
 \toprule
@@ -1021,18 +1058,20 @@ IMDB      & 0.419 & 0.280 & 0.500 & 0.621 & 2.20 \\
 \end{tabular}
 \end{table}
 
-IMDB has the highest entropy ($\mu = 0.419$) and overlap ratio (0.621), reflecting its dense structure and role-heterogeneous nature.
-CiteSeer has the lowest entropy ($\mu = 0.071$), indicating near-deterministic memberships.
-Entropy variance is highest on IMDB ($\sigma = 0.280$) and lowest on CiteSeer ($\sigma = 0.126$), suggesting that IMDB has the widest spread of ambiguity levels---the condition under which adaptive thresholding should have the most room to help.
+Two observations stand out. 
+First, IMDB exhibits by far the highest mean entropy (0.419) and entropy standard deviation (0.280), as well as the largest overlap ratio (0.621) and mean clusters per node (2.20). 
+This reflects the dense, role-heterogeneous nature of IMDB, where many nodes naturally straddle multiple communities. 
+Second, CiteSeer has the lowest mean entropy (0.071) and the smallest standard deviation (0.126), indicating that most nodes have near-deterministic community memberships with very little ambiguity; accordingly, its overlap ratio is only 0.137. 
+These statistics suggest that adaptive thresholding is most likely to provide benefits on datasets with high entropy variance, where there is room to differentiate between confident and ambiguous nodes, while its impact may be limited on datasets with near-uniform low entropy.
 
 \paragraph{Correlation Between Ambiguity and Overlap.}
 
-Table~\ref{tab:correlations} reports Spearman rank correlations between ambiguity measures and structural properties.
-All correlations are significant at $p < 0.001$.
+To quantify the strength of the relationship between ambiguity measures and overlap behavior, Table~\ref{tab:correlations} reports Spearman rank correlations between entropy, margin-based ambiguity, overlap ratio, and the number of assigned clusters. 
+All reported correlations are statistically significant at $p < 0.001$.
 
 \begin{table}[ht]
 \centering
-\caption{Spearman rank correlations between ambiguity measures and structural properties.}
+\caption{Spearman rank correlations between ambiguity measures and overlap indicators.}
 \label{tab:correlations}
 \begin{tabular}{lcccc}
 \toprule
@@ -1048,27 +1087,20 @@ IMDB      & 0.701 & 0.808 & 0.790 & 0.676 \\
 \end{tabular}
 \end{table}
 
-Entropy correlates strongly with both overlap assignment and cluster count across all datasets ($r = 0.60$--$0.81$), confirming that high-entropy nodes are systematically assigned to more clusters.
-Ambiguity correlates strongly with overlap on four of six datasets but weakly on CiteSeer and DBLP ($r \approx 0.10$), where entropy and margin measure fundamentally different aspects of the membership distribution.
-On PubMed, entropy and ambiguity are nearly identical ($r = 0.981$), suggesting the two measures are redundant on that dataset.
-
-%The scatter plots in Figure~\ref{fig:entropy-vs-clusters} visualize the entropy--cluster count relationship across all datasets, showing the clear positive trend.
-%
-%\begin{figure}[ht]
-%\centering
-%\includegraphics[width=\textwidth]{figures/entropy_vs_clusters.png}
-%\caption{Entropy vs.\ number of clusters assigned for each dataset. Each point represents a node. Higher entropy correlates with more cluster assignments, confirming that entropy captures genuine membership ambiguity.}
-%\label{fig:entropy-vs-clusters}
-%\end{figure}
+Entropy correlates strongly with both overlap ratio and cluster count across all datasets, with coefficients ranging from 0.60 to 0.81. 
+This is a robust confirmation that high-entropy nodes are systematically assigned to more clusters, supporting our central hypothesis that ambiguity is a meaningful criterion for overlap selection.
+In contrast, margin-based ambiguity shows strong correlations with overlap on four of the six datasets (Cora, PubMed, ACM, IMDB), but weak correlations on CiteSeer and DBLP ($r \approx 0.10$). 
+The weak correlation on these two datasets is explained by the near-zero or negative correlation between entropy and ambiguity ($r = -0.366$ for CiteSeer and $r = -0.398$ for DBLP), indicating that the two measures capture fundamentally different aspects of the membership distribution: entropy reflects spread across all communities, while margin-based ambiguity focuses specifically on the competition between the top two communities. 
+On PubMed, the two measures are nearly identical ($r = 0.981$), suggesting redundancy; on this dataset, using either entropy or margin alone would yield almost the same overlap assignments.
 
 \paragraph{Stratified Ambiguity Analysis.}
 
-To directly test the ambiguity hypothesis, we stratify nodes into entropy terciles and examine their overlap assignment rates.
-Table~\ref{tab:stratified} presents the results.
+To directly test the hypothesis that high-ambiguity nodes are more likely to be suitable for overlap, we stratify nodes in each dataset into entropy terciles (low, medium, high) and compare their overlap assignment rates.
+Table~\ref{tab:stratified} presents the overlap ratio and mean number of assigned clusters for each entropy tercile.
 
 \begin{table}[ht]
 \centering
-\caption{Overlap ratio and mean clusters per entropy tercile.}
+\caption{Overlap ratio and average cluster count per entropy tercile.}
 \label{tab:stratified}
 \begin{tabular}{lllcccc}
 \toprule
@@ -1105,25 +1137,27 @@ Table~\ref{tab:stratified} presents the results.
 \end{tabular}
 \end{table}
 
-The pattern is consistent across all datasets: high-entropy nodes receive 41--95\% overlap assignment, while low-entropy nodes receive 0--17\%.
-On IMDB, the most ambiguous nodes are assigned to 3.4 clusters on average, confirming they genuinely straddle multiple communities.
-On CiteSeer and DBLP, where many nodes have near-zero entropy, the two lowest terciles merge into a single low-entropy bin with almost no overlap.
-Figure~\ref{fig:overlap-by-tercile} visualizes this relationship, showing the stark contrast between entropy terciles.
+The results are remarkably consistent across all datasets. 
+High-entropy nodes receive overlap assignments in 41--95\% of cases, whereas low-entropy nodes receive overlap in only 0--17\% of cases. 
+On IMDB, the most ambiguous nodes are assigned to an average of 3.4 clusters, confirming that they genuinely straddle multiple communities. 
+On CiteSeer and DBLP, many nodes have near-zero entropy, and the two lowest terciles merge into a single low-entropy bin with almost no overlap. 
+Figure~\ref{fig:overlap-by-tercile} visualises the stark contrast between entropy terciles, providing compelling visual evidence that entropy is a strong predictor of overlap suitability.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=\textwidth]{figures/overlap_vs_entropy.png}
-\caption{Overlap ratio by entropy tercile for each dataset. High-entropy nodes consistently receive far more overlap assignments than low-entropy nodes, validating the hypothesis that membership ambiguity identifies useful overlap candidates.}
+\caption{Overlap ratio by entropy tercile for each dataset. High-entropy nodes consistently receive substantially more overlap assignments than low-entropy nodes, validating that membership ambiguity is a principled criterion for selecting overlap candidates.}
 \label{fig:overlap-by-tercile}
 \end{figure}
 
 \paragraph{Why Adaptive WMC Helps Some Datasets More Than Others.}
 
-Table~\ref{tab:gains-vs-variance} examines the relationship between entropy statistics and adaptive performance gain.
+Finally, we examine the relationship between entropy statistics and the performance gain achieved by adaptive thresholding.
+Table~\ref{tab:gains-vs-variance} compares each dataset's entropy variance with the F1 improvement (in percentage points) of the best adaptive method over the fixed WMC=0.30 baseline.
 
 \begin{table}[ht]
 \centering
-\caption{Relationship between entropy statistics and adaptive performance gain.}
+\caption{Relationship between entropy variance and adaptive performance gain.}
 \label{tab:gains-vs-variance}
 \begin{tabular}{llll}
 \toprule
@@ -1139,21 +1173,20 @@ CiteSeer & 0.016 & +0.0 & Very low entropy $\rightarrow$ minimal room for improv
 \end{tabular}
 \end{table}
 
-Performance gains from adaptive thresholding show a partial relationship with entropy variance: the largest gains occur on datasets with higher variance (ACM, PubMed, IMDB), while CiteSeer, with the lowest variance, gains nothing.
-The relationship is not strictly monotonic---variance alone does not determine the gain, because the benefit also depends on how far the default WMC~=~0.30 is from the per-dataset optimum.
-For example, Cora (variance~0.028) shows negligible gain because WMC~=~0.30 is already the best fixed threshold (0.832 micro F1), leaving no room for improvement regardless of method.
-PubMed and DBLP have similar entropy variance to Cora ($\sigma^2 \approx 0.03$), yet gain +1.6 and +1.2 F1, respectively, because their default WMC~=~0.30 underperforms the per-dataset optimum (WMC~=~0.20 for PubMed, WMC~=~0.10 for DBLP), and adaptive methods can lower the threshold for ambiguous nodes to recover the lost performance.
-The dashed trend line in Figure~\ref{fig:gain-variance} shows the linear fit between entropy variance and performance gain, illustrating the overall positive association despite the outliers.
-Figure~\ref{fig:gain-variance} visualizes this relationship.
+Performance gains show a partial positive relationship with entropy variance: the largest gains occur on datasets with higher variance (ACM, PubMed, IMDB), while CiteSeer, with the lowest variance, gains nothing.
+However, the relationship is not strictly monotonic. 
+Cora, for example, has variance 0.028—similar to that of PubMed and DBLP—but shows no gain because WMC=0.30 is already the best fixed threshold (0.832 micro F1), leaving no room for improvement regardless of method. 
+In contrast, PubMed and DBLP achieve gains of +1.6 and +1.2 F1, respectively, even though their entropy variances are comparable to Cora, because their default WMC=0.30 underperforms the per-dataset optimum (WMC=0.20 for PubMed, WMC=0.10 for DBLP). 
+Adaptive methods are able to lower the threshold for ambiguous nodes and thus recover the lost performance.
+The dashed trend line in Figure~\ref{fig:gain-variance} shows the linear fit between entropy variance and performance gain, illustrating the overall positive association despite the outliers (Cora and IMDB). 
+Ceiling effects (ACM), near-optimal defaults (Cora), and very low ambiguity (CiteSeer) all limit the practical gain, regardless of variance.
 
 \begin{figure}[ht]
 \centering
 \includegraphics[width=0.75\textwidth]{figures/gain_vs_variance.png}
-\caption{Performance gain (micro-F1 improvement over WMC~=~0.30) vs.\ entropy variance ($\sigma^2$) for each dataset. Datasets with higher entropy variance (ACM, PubMed, IMDB) show the largest gains, while CiteSeer, with the lowest variance, gains nothing.}
+\caption{Performance gain (micro-F1 improvement over WMC=0.30) versus entropy variance ($\sigma^2$) for each dataset. Datasets with higher entropy variance (ACM, PubMed, IMDB) generally show larger gains, while CiteSeer, with the lowest variance, shows no gain. The dashed line indicates the overall linear trend.}
 \label{fig:gain-variance}
 \end{figure}
-
-Ceiling effects (ACM), near-optimal defaults (Cora), and very low ambiguity (CiteSeer) limit gains regardless of variance.
 
 %%======================================================================
 \section{Discussion}
