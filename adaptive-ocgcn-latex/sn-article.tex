@@ -462,7 +462,7 @@ The desired adaptive assignment mechanism should satisfy three properties: ambig
 This section introduces our adaptive overlap assignment framework.
 Section~\ref{subsec:overview} provides a high-level overview of the adaptive threshold mechanism.
 Sections~\ref{subsec:entropy-adaptive}--\ref{subsec:hybrid-adaptive} present three complementary adaptive strategies based on entropy, margin, and hybrid ambiguity signals.
-Section~\ref{subsec:comparison} compares these strategies, and Section~\ref{subsec:algorithm-summary} summarizes the complete procedure.
+Section~\ref{subsec:comparison} compares these strategies, and algorithm \ref{alg:adaptive} summarizes the complete procedure.
 
 \subsection{Overview}
 \label{subsec:overview}
@@ -636,7 +636,7 @@ Algorithm~\ref{alg:adaptive} summarizes the complete adaptive overlap assignment
 %%======================================================================
 
 This section describes the experimental setup and presents our results.
-We begin with the datasets (Section~\ref{subsec:datasets}) and baseline configurations (Section~\ref{subsec:baselines})..
+We begin with the datasets (Section~\ref{subsec:datasets}) and baseline configurations (Section~\ref{subsec:baselines}).
 We then present the main results comparing adaptive methods against fixed-threshold baselines (Section~\ref{sec:results}), including ablation studies, fairness analysis, computational overhead, statistical significance, and an analysis of the relationship between membership ambiguity and overlap quality.
 
 \subsection{Datasets}
@@ -843,6 +843,8 @@ Figures~\ref{fig:entropy-lambda},~\ref{fig:margin-lambda} and~\ref{fig:hybrid-la
 \label{fig:hybrid-lambda}
 \end{figure}
 
+\clearpage
+
 \subsubsection{Fair Comparison: Equal Overlap Ratios}
 \label{subsec:fair-comparison}
 
@@ -987,10 +989,12 @@ Figure~\ref{fig:heatmap} provides a comprehensive view of the micro-F1 differenc
 
 \begin{figure}[ht]
 \centering
-\includegraphics[width=0.85\textwidth]{figures/significance_heatmap.png}
+\includegraphics[width=0.65\textwidth]{figures/significance_heatmap.png}
 \caption{Micro-F1 difference between Margin-Adaptive and each fixed WMC baseline. Green cells indicate adaptive wins; red cells indicate fixed wins. Margin-Adaptive is competitive with most fixed WMC values across datasets without tuning.}
 \label{fig:heatmap}
 \end{figure}
+
+\clearpage
 
 \subsubsection{Ambiguity Analysis}
 \label{sec:ambiguity-analysis}
@@ -1048,14 +1052,14 @@ Entropy correlates strongly with both overlap assignment and cluster count acros
 Ambiguity correlates strongly with overlap on four of six datasets but weakly on CiteSeer and DBLP ($r \approx 0.10$), where entropy and margin measure fundamentally different aspects of the membership distribution.
 On PubMed, entropy and ambiguity are nearly identical ($r = 0.981$), suggesting the two measures are redundant on that dataset.
 
-The scatter plots in Figure~\ref{fig:entropy-vs-clusters} visualize the entropy--cluster count relationship across all datasets, showing the clear positive trend.
-
-\begin{figure}[ht]
-\centering
-\includegraphics[width=\textwidth]{figures/entropy_vs_clusters.png}
-\caption{Entropy vs.\ number of clusters assigned for each dataset. Each point represents a node. Higher entropy correlates with more cluster assignments, confirming that entropy captures genuine membership ambiguity.}
-\label{fig:entropy-vs-clusters}
-\end{figure}
+%The scatter plots in Figure~\ref{fig:entropy-vs-clusters} visualize the entropy--cluster count relationship across all datasets, showing the clear positive trend.
+%
+%\begin{figure}[ht]
+%\centering
+%\includegraphics[width=\textwidth]{figures/entropy_vs_clusters.png}
+%\caption{Entropy vs.\ number of clusters assigned for each dataset. Each point represents a node. Higher entropy correlates with more cluster assignments, confirming that entropy captures genuine membership ambiguity.}
+%\label{fig:entropy-vs-clusters}
+%\end{figure}
 
 \paragraph{Stratified Ambiguity Analysis.}
 
@@ -1203,6 +1207,7 @@ As long as the chosen clustering method outputs a normalized membership matrix $
 This makes Adaptive-OCGCN a general-purpose plugin that can improve partition-based GNN training pipelines utilizing various soft clustering techniques.
 
 \subsection{Practical Recommendations}
+\label{subsec:recommendations}
 
 Based on our findings, we recommend:
 
@@ -1274,5 +1279,10 @@ The authors declare that no funds, grants, or other support were received during
 
 \subsection*{Competing Interests}
 The authors have no relevant financial or non-financial interests to disclose.
+
+\subsection*{Declaration of Generative AI and AI-assisted Technologies in the Writing Process}
+
+During the preparation of this work, the author used AI-assisted tools and services, including Mimo and Buffy (via Freebuff) and DeepSeek for various aspects of the research and manuscript preparation process, including writing and editing assistance, code development, experimental design and execution, data analysis, figure and table preparation, manuscript organization, and scientific presentation. All generated content and outputs were reviewed, verified, and edited by the author as appropriate. The author takes full responsibility for the accuracy, integrity, and final content of the publication.
+
 
 \end{document}
